@@ -9,6 +9,7 @@ import { SettingsView } from './components/settings/SettingsView';
 import { TreasureView } from './components/treasure/TreasureView';
 import { ErrorBayView } from './components/error-bay/ErrorBayView';
 import { AchievementsView } from './components/achievements/AchievementsView';
+import { DebugPanel } from './components/dev/DebugPanel';
 import { QuestsView, LegendaryView } from './components/quests/QuestsView';
 import { useGameStore } from './stores/playerStore';
 import { ACHIEVEMENTS } from './data/achievements';
@@ -91,6 +92,7 @@ export default function App() {
       <ScreenRouter />
       <XpPopup />
       <AchievementPopup />
+      <DebugPanel />
     </Layout>
   );
 }

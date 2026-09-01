@@ -4,7 +4,7 @@ import { ArrowLeft, BookOpen, Gamepad2, ClipboardCheck } from 'lucide-react';
 import { useGameStore } from '../../stores/playerStore';
 import { getLessons, getPractice } from '../../data/lessons';
 import { getTopicById } from '../../data/topics';
-import { PracticeView } from './PracticeView';
+import { PracticeRouter } from '../practice/PracticeRouter';
 
 type Tab = 'theory' | 'practice' | 'quiz';
 
@@ -147,7 +147,7 @@ export function LessonView() {
 
         {tab === 'practice' && (
           <motion.div key="practice" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <PracticeView
+            <PracticeRouter
               topicId={currentTopicId}
               exercises={practice}
               completed={progress.practiceCompleted}

@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '../../stores/playerStore';
 import { TOPIC_ORDER } from '../../data/topics';
+import { pirateAssets } from '../../config/assetManifest';
+import { AssetImage } from '../ui/AssetImage';
 import {
   savePdfOffer,
   getPdfOffer,
@@ -15,20 +17,23 @@ export function TreasureView() {
   const finalReviewCompleted = useGameStore((s) => s.finalReviewCompleted);
   const treasureUnlocked = useGameStore((s) => s.treasureUnlocked);
   const pdfMeta = useGameStore((s) => s.pdfMeta);
+  const mistakes = useGameStore((s) => s.mistakes);
   const setPdfMeta = useGameStore((s) => s.setPdfMeta);
   const checkTreasureUnlock = useGameStore((s) => s.checkTreasureUnlock);
   const unlockTreasure = useGameStore((s) => s.unlockTreasure);
   const setScreen = useGameStore((s) => s.setScreen);
 
   const [uploadError, setUploadError] = useState('');
-  const [showUnlock, setShowUnlock] = useState(false);
+  const [chestOpen, setChestOpen] = useState(false);
+  const [unlockAnim, setUnlockAnim] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const allTopicsDone = TOPIC_ORDER.every(
     (id) =>
-      topicProgress[id]?.masteryScore >= 70 &&
+      (topicProgress[id]?.masteryScore ?? 0) >= 70 &&
       (topicProgress[id]?.quizAttempts.length ?? 0) > 0,
   );
+  const noUnresolved = mistakes.filter((m) => !m.resolved).length === 0;
 
   useEffect(() => {
     getPdfOffer().then((offer) => {
@@ -36,13 +41,16 @@ export function TreasureView() {
     });
   }, [setPdfMeta]);
 
+  useEffect(() => {
+    if (treasureUnlocked) setChestOpen(true);
+  }, [treasureUnlocked]);
+
   const conditions = [
     { label: 'Все 7 островов пройдены', done: allTopicsDone },
     { label: 'Финальный обзор ошибок', done: finalReviewCompleted },
+    { label: 'Нет открытых пробоин', done: noUnresolved },
     { label: 'PDF оффера загружен', done: !!pdfMeta },
   ];
-
-  const allConditionsMet = conditions.every((c) => c.done);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -55,144 +63,102 @@ export function TreasureView() {
     setUploadError('');
     const meta = await savePdfOffer(file);
     setPdfMeta(meta);
-    if (allConditionsMet || (allTopicsDone && finalReviewCompleted)) {
-      checkTreasureUnlock();
-      if (!treasureUnlocked) {
-        setShowUnlock(true);
-        unlockTreasure();
-      }
-    }
+    checkTreasureUnlock();
   };
 
+  useEffect(() => {
+    if (allTopicsDone && finalReviewCompleted && noUnresolved && pdfMeta && !treasureUnlocked) {
+      setUnlockAnim(true);
+      setTimeout(() => {
+        setChestOpen(true);
+        unlockTreasure();
+      }, 1500);
+    }
+  }, [allTopicsDone, finalReviewCompleted, noUnresolved, pdfMeta, treasureUnlocked, unlockTreasure]);
+
   return (
-    <div className="h-full flex items-center justify-center p-6 relative overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#0a1628] via-[#1a3050] to-[#0d2847]" />
-      <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-emerald-900/30 to-transparent" />
+    <div className="h-full relative overflow-hidden flex items-center justify-center">
+      <AssetImage src={pirateAssets.islands.treasure} alt="Treasure Island" className="absolute inset-0 w-full h-full object-cover" fallback={null} />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/80 via-transparent to-[#0a1628]/40" />
 
-      <div className="relative z-10 text-center max-w-lg">
-        <motion.div
-          animate={treasureUnlocked ? { scale: [1, 1.05, 1] } : {}}
-          transition={{ duration: 2, repeat: Infinity }}
-          className="text-8xl mb-6"
-        >
-          {treasureUnlocked ? '💎' : '🔒'}
-        </motion.div>
+      <div className="relative z-10 text-center max-w-lg p-6">
+        <h2 className="text-3xl font-display font-bold text-amber-200 mb-2">Остров оффера</h2>
 
-        <h2 className="text-3xl font-bold text-amber-200 mb-2">Остров оффера</h2>
+        <div className="relative my-8 h-40 flex items-center justify-center">
+          <AnimatePresence>
+            {unlockAnim && !chestOpen && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1, rotate: [0, -5, 5, -5, 0] }}
+                className="absolute text-4xl text-amber-400"
+              >
+                🔒
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <motion.div animate={chestOpen ? { scale: [1, 1.1, 1] } : {}} transition={{ duration: 0.6 }}>
+            <AssetImage
+              src={chestOpen ? pirateAssets.chest.open : pirateAssets.chest.closed}
+              alt="Treasure chest"
+              className={`w-36 h-36 mx-auto object-contain ${chestOpen ? 'treasure-glow' : ''}`}
+              fallback={<span className="text-7xl">{chestOpen ? '📂' : '📦'}</span>}
+            />
+          </motion.div>
+          {chestOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-full"
+            >
+              {pdfMeta && (
+                <div className="bg-black/60 border border-amber-500/40 rounded-lg px-4 py-2 inline-block">
+                  <span className="text-amber-200">📄 {pdfMeta.fileName}</span>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </div>
 
         {!treasureUnlocked ? (
           <>
-            <p className="text-blue-300 mb-6">
-              Главный клад пока не найден.
-              <br />
-              <span className="text-sm opacity-70">
-                Настоящий DevOps-пират завершает путешествие не картинкой с золотом, а оффером.
-              </span>
+            <p className="text-cyan-300/80 mb-6 text-sm">
+              Настоящий DevOps-пират завершает путешествие оффером, а не картинкой с золотом.
             </p>
-
-            <div className="bg-[#1a3050]/80 rounded-xl p-4 mb-6 text-left space-y-2">
+            <div className="bg-black/40 rounded-xl p-4 mb-6 text-left space-y-2 text-sm">
               {conditions.map((c) => (
-                <div key={c.label} className="flex items-center gap-2 text-sm">
-                  <span className={c.done ? 'text-green-400' : 'text-red-400'}>
-                    {c.done ? '✓' : '○'}
-                  </span>
-                  <span className={c.done ? 'text-green-200' : 'text-blue-300'}>{c.label}</span>
+                <div key={c.label} className="flex items-center gap-2">
+                  <span className={c.done ? 'text-emerald-400' : 'text-red-400'}>{c.done ? '✓' : '○'}</span>
+                  <span className={c.done ? 'text-emerald-200' : 'text-cyan-300'}>{c.label}</span>
                 </div>
               ))}
             </div>
-
-            <input
-              ref={fileRef}
-              type="file"
-              accept="application/pdf"
-              className="hidden"
-              onChange={handleUpload}
-            />
+            <input ref={fileRef} type="file" accept="application/pdf" className="hidden" onChange={handleUpload} />
             <button
+              type="button"
               onClick={() => fileRef.current?.click()}
-              className="px-8 py-3 bg-gradient-to-r from-amber-600 to-yellow-500 rounded-lg font-bold text-amber-950 mb-2"
+              className="px-8 py-3 bg-gradient-to-r from-amber-600 to-yellow-500 rounded-lg font-bold text-amber-950"
             >
-              📄 ЗАГРУЗИТЬ МОЙ ОФФЕР
+              ЗАГРУЗИТЬ МОЙ ОФФЕР
             </button>
-            {uploadError && <p className="text-red-400 text-sm">{uploadError}</p>}
-            {pdfMeta && (
-              <p className="text-green-400 text-sm mt-2">
-                ✓ {pdfMeta.fileName} ({(pdfMeta.fileSize / 1024).toFixed(0)} KB)
-              </p>
-            )}
+            {uploadError && <p className="text-red-400 text-sm mt-2">{uploadError}</p>}
           </>
         ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="treasure-glow bg-gradient-to-br from-amber-900/40 to-yellow-900/20 border border-amber-500/50 rounded-2xl p-8"
-          >
-            <div className="text-4xl mb-4">🏴‍☠️</div>
-            <h3 className="text-2xl font-bold text-amber-200 mb-2">ПУТЕШЕСТВИЕ ЗАВЕРШЕНО</h3>
-            <p className="text-amber-100/80 mb-6">Ты получил свой DevOps-оффер!</p>
-
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <h3 className="text-xl font-display font-bold text-amber-200 mb-2">LEGENDARY DEVOPS CAPTAIN</h3>
+            <p className="text-amber-100/80 mb-6">Путешествие завершено!</p>
             {pdfMeta && (
-              <div className="bg-black/30 rounded-lg p-4 mb-6 text-left">
-                <div className="text-amber-300 font-semibold">📄 {pdfMeta.fileName}</div>
-                <div className="text-sm text-blue-300 mt-1">
-                  Загружен: {new Date(pdfMeta.uploadedAt).toLocaleDateString('ru')}
-                </div>
-                <div className="text-sm text-blue-400">
-                  Размер: {(pdfMeta.fileSize / 1024).toFixed(0)} KB
-                </div>
+              <div className="flex gap-3 justify-center">
+                <button type="button" onClick={async () => { const o = await getPdfOffer(); if (o) openPdfBlob(o.blob); }} className="px-4 py-2 bg-cyan-700 rounded text-white text-sm">
+                  Открыть оффер
+                </button>
+                <button type="button" onClick={async () => { const o = await getPdfOffer(); if (o) downloadPdfBlob(o.blob, o.meta.fileName); }} className="px-4 py-2 bg-amber-600 rounded text-white text-sm">
+                  Скачать
+                </button>
               </div>
             )}
-
-            <div className="flex gap-3 justify-center">
-              <button
-                onClick={async () => {
-                  const offer = await getPdfOffer();
-                  if (offer) openPdfBlob(offer.blob);
-                }}
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white"
-              >
-                Открыть оффер
-              </button>
-              <button
-                onClick={async () => {
-                  const offer = await getPdfOffer();
-                  if (offer) downloadPdfBlob(offer.blob, offer.meta.fileName);
-                }}
-                className="px-6 py-2 bg-amber-600 hover:bg-amber-500 rounded-lg text-white"
-              >
-                Скачать
-              </button>
-            </div>
-
-            <div className="mt-8 p-4 bg-purple-900/30 rounded-lg border border-purple-500/30">
-              <div className="text-2xl mb-2">🏆</div>
-              <div className="font-bold text-purple-200">LEGENDARY DEVOPS CAPTAIN</div>
-            </div>
-
-            <button
-              onClick={() => setScreen('legendary')}
-              className="mt-6 text-amber-400 hover:text-amber-300 text-sm"
-            >
+            <button type="button" onClick={() => setScreen('legendary')} className="mt-6 text-amber-400 text-sm">
               Legendary Voyage →
             </button>
-          </motion.div>
-        )}
-
-        {showUnlock && !treasureUnlocked && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
-          >
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="text-center"
-            >
-              <div className="text-6xl mb-4">✨🎉✨</div>
-              <p className="text-amber-200 text-xl font-bold">Сундук открывается!</p>
-            </motion.div>
           </motion.div>
         )}
       </div>

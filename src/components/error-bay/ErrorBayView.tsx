@@ -1,6 +1,7 @@
 import { useGameStore } from '../../stores/playerStore';
-import { TOPICS } from '../../data/topics';
-import { TOPIC_ORDER } from '../../data/topics';
+import { TOPICS, TOPIC_ORDER } from '../../data/topics';
+import { pirateAssets } from '../../config/assetManifest';
+import { AssetImage } from '../ui/AssetImage';
 
 export function ErrorBayView() {
   const mistakes = useGameStore((s) => s.mistakes);
@@ -8,94 +9,102 @@ export function ErrorBayView() {
   const startFinalReview = useGameStore((s) => s.startFinalReview);
   const setScreen = useGameStore((s) => s.setScreen);
   const topicProgress = useGameStore((s) => s.topicProgress);
+  const getUnresolvedMistakeCount = useGameStore((s) => s.getUnresolvedMistakeCount);
 
   const allTopicsDone = TOPIC_ORDER.every(
     (id) =>
-      topicProgress[id]?.masteryScore >= 70 &&
+      (topicProgress[id]?.masteryScore ?? 0) >= 70 &&
       (topicProgress[id]?.quizAttempts.length ?? 0) > 0,
   );
 
-  const byTopic = TOPICS.map((t) => {
-    const topicMistakes = mistakes.filter((m) => m.topicId === t.id);
-    const unresolved = topicMistakes.filter((m) => !m.resolved);
-    const resolved = topicMistakes.filter((m) => m.resolved);
-    return { topic: t, total: topicMistakes.length, unresolved: unresolved.length, resolved: resolved.length };
-  });
-
-  const totalUnresolved = mistakes.filter((m) => !m.resolved).length;
+  const unresolved = mistakes.filter((m) => !m.resolved);
+  const byTopic = TOPICS.map((t) => ({
+    topic: t,
+    count: unresolved.filter((m) => m.topicId === t.id).length,
+  }));
 
   if (!allTopicsDone) {
     return (
-      <div className="p-8 text-center">
-        <div className="text-6xl mb-4">💀</div>
-        <h2 className="text-2xl font-bold text-amber-100 mb-4">Капитанский обзор ошибок</h2>
-        <p className="text-blue-300">Сначала пройди все 7 островов, чтобы попасть в финальную бухту.</p>
-        <button onClick={() => setScreen('map')} className="mt-6 text-amber-400">← На карту</button>
+      <div className="h-full flex items-center justify-center p-8">
+        <div className="text-center max-w-md">
+          <AssetImage src={pirateAssets.islands.errorBay} alt="Error Bay" className="w-48 h-36 mx-auto mb-4 object-contain opacity-50" fallback={<span className="text-6xl">💀</span>} />
+          <h2 className="text-2xl font-display font-bold text-parchment mb-4">Капитанский обзор ошибок</h2>
+          <p className="text-cyan-300/80">Сначала пройди все 7 островов.</p>
+          <button type="button" onClick={() => setScreen('map')} className="mt-6 text-amber-400">← На карту</button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <div className="text-center mb-8">
-        <div className="text-6xl mb-4">💀</div>
-        <h2 className="text-2xl font-bold text-amber-100 mb-2">Капитанский обзор ошибок</h2>
-        <p className="text-blue-300/80">
-          Все пробоины корабля. Исправь слабые места, чтобы открыть путь к сокровищам.
-        </p>
-      </div>
+    <div className="h-full relative overflow-auto">
+      <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a12] via-[#1a1020] to-[#0d1f3c]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(220,50,50,0.15),transparent_60%)]" />
 
-      <div className="space-y-3 mb-8">
-        {byTopic.map(({ topic, total, unresolved, resolved }) => (
-          <div
-            key={topic.id}
-            className="flex items-center justify-between p-4 bg-[#1a3050]/60 border border-blue-800/30 rounded-lg"
-          >
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">{topic.icon}</span>
-              <span className="text-blue-100">{topic.nameRu}</span>
-            </div>
-            <div className="text-sm">
-              {total === 0 ? (
-                <span className="text-green-400">Без ошибок ✓</span>
-              ) : (
-                <span>
-                  <span className="text-orange-400">{unresolved} открытых</span>
-                  {resolved > 0 && <span className="text-green-400 ml-2">/ {resolved} исправлено</span>}
-                </span>
-              )}
-            </div>
+      <div className="relative z-10 p-8 max-w-3xl mx-auto">
+        <div className="flex items-start gap-6 mb-8">
+          <AssetImage src={pirateAssets.islands.errorBay} alt="Mistake Bay" className="w-40 h-32 object-contain" fallback={<span className="text-6xl">💀</span>} />
+          <div>
+            <h2 className="text-2xl font-display font-bold text-red-200">Бухта ошибок</h2>
+            <p className="text-red-200/60 text-sm mt-1">Ремонтная бухта · финальный обзор пробоин</p>
           </div>
-        ))}
-      </div>
+        </div>
 
-      {finalReviewCompleted ? (
-        <div className="text-center p-6 bg-green-900/30 border border-green-600 rounded-xl">
-          <div className="text-3xl mb-2">✓</div>
-          <p className="text-green-200 font-semibold">Все пробоины корабля устранены!</p>
-          <p className="text-green-300/80 text-sm mt-2">Путь к сокровищам открыт.</p>
-          <button
-            onClick={() => setScreen('treasure')}
-            className="mt-4 px-6 py-2 bg-amber-600 hover:bg-amber-500 rounded-lg text-white"
-          >
-            К острову оффера →
-          </button>
+        <div className="bg-black/40 border border-red-900/40 rounded-xl p-6 mb-6">
+          <div className="text-red-300 font-semibold mb-4">
+            Осталось пробоин: {getUnresolvedMistakeCount()}
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {byTopic.map(({ topic, count }) => (
+              <div
+                key={topic.id}
+                className={`flex justify-between p-3 rounded-lg border ${
+                  count > 0 ? 'border-orange-600/50 bg-orange-950/30' : 'border-emerald-800/30 bg-emerald-950/20'
+                }`}
+              >
+                <span className="text-sm text-parchment">{topic.nameRu}</span>
+                <span className={count > 0 ? 'text-orange-400 font-bold' : 'text-emerald-400'}>{count}</span>
+              </div>
+            ))}
+          </div>
         </div>
-      ) : (
-        <div className="text-center">
-          <p className="text-blue-300 mb-4">
-            {totalUnresolved > 0
-              ? `${totalUnresolved} вопросов требуют повторения`
-              : 'Пройди финальный review для подтверждения знаний'}
-          </p>
-          <button
-            onClick={startFinalReview}
-            className="px-8 py-3 bg-gradient-to-r from-red-700 to-orange-600 rounded-lg font-bold text-white"
-          >
-            Начать финальный обзор
-          </button>
-        </div>
-      )}
+
+        {unresolved.length > 0 && (
+          <div className="space-y-2 mb-6 max-h-48 overflow-y-auto">
+            {unresolved.slice(0, 8).map((m) => (
+              <div key={m.questionId} className="p-3 rounded-lg bg-red-950/30 border border-red-800/30 text-sm">
+                <span className="text-orange-400 text-xs">{m.skillTag}</span>
+                <p className="text-red-100/80 mt-1 line-clamp-2">{m.question}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {finalReviewCompleted ? (
+          <div className="text-center p-6 bg-emerald-900/30 border border-emerald-600 rounded-xl">
+            <p className="text-emerald-200 font-semibold">Все пробоины устранены!</p>
+            <p className="text-emerald-300/70 text-sm mt-2">Путь к сокровищам открыт.</p>
+            <button type="button" onClick={() => setScreen('treasure')} className="mt-4 px-6 py-2 bg-amber-600 rounded-lg text-white">
+              К острову оффера →
+            </button>
+          </div>
+        ) : (
+          <div className="text-center">
+            <p className="text-cyan-300 mb-4">
+              {unresolved.length > 0
+                ? `Исправь ${unresolved.length} ошибок. По ${Math.min(10, unresolved.length)} за заход.`
+                : 'Начни финальный обзор'}
+            </p>
+            <button
+              type="button"
+              onClick={startFinalReview}
+              className="px-8 py-3 bg-gradient-to-r from-red-800 to-orange-700 rounded-lg font-bold text-white"
+            >
+              {unresolved.length > 0 ? 'Продолжить обзор ошибок' : 'Начать финальный обзор'}
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

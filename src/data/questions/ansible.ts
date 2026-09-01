@@ -10,6 +10,7 @@ const q = (
   correctAnswer: string | string[] | boolean,
   explanation: string,
   remember?: string,
+  configSnippet?: string,
 ): Question => ({
   id,
   topicId: 'ansible',
@@ -21,6 +22,7 @@ const q = (
   correctAnswer,
   explanation,
   remember,
+  configSnippet,
 });
 
 export const ansibleQuestions: Question[] = [
@@ -31,7 +33,7 @@ export const ansibleQuestions: Question[] = [
   q('ans-05', 'handlers', 'single', 'medium', 'Handler в Ansible:', ['Запускается всегда', 'Запускается при notify после изменения task', 'Только для debug', 'Заменяет playbook'], 'Запускается при notify после изменения task', 'Handlers — задачи по событию (перезапуск сервиса после изменения конфига).'),
   q('ans-06', 'variables', 'single', 'easy', 'Переменные в playbook задаются через:', ['vars, vars_files, -e', 'Только ENV', 'Только JSON', 'Нельзя'], 'vars, vars_files, -e', 'vars в play, vars_files, extra vars через -e.'),
   q('ans-07', 'roles', 'single', 'medium', 'Role в Ansible — это:', ['Один task', 'Переиспользуемая структура (tasks, vars, templates)', 'Inventory group', 'Module'], 'Переиспользуемая структура (tasks, vars, templates)', 'Role: tasks/, handlers/, templates/, vars/, defaults/.'),
-  q('ans-08', 'yaml', 'config', 'medium', 'Найдите ошибку в YAML:\n- name: Install nginx\n  apt: name=nginx state=latest\n  - name: Start nginx', ['Нет ошибки', 'Неправильный отступ второго task', 'apt неверный', 'name лишний'], 'Неправильный отступ второго task', 'Второй task должен быть на том же уровне отступа, что и первый.'),
+  q('ans-08', 'yaml', 'config', 'medium', 'Найдите ошибку в YAML playbook:', ['Нет ошибки', 'Неправильный отступ второго task', 'apt неверный'], 'Неправильный отступ второго task', 'Второй task должен быть на том же уровне отступа, что и первый.', undefined, '- name: Install nginx\n  apt: name=nginx state=latest\n  - name: Start nginx'),
   q('ans-09', 'idempotency', 'truefalse', 'easy', 'Ansible playbook идемпотентен — повторный запуск не меняет состояние если уже достигнуто.', [], true, 'Идемпотентность — ключевое свойство Ansible.'),
   q('ans-10', 'connection', 'single', 'medium', 'По умолчанию Ansible подключается через:', ['Telnet', 'SSH', 'SNMP', 'HTTP'], 'SSH', 'SSH — default connection plugin. Также winrm для Windows.'),
   q('ans-11', 'facts', 'single', 'medium', 'Ansible facts — это:', ['Ошибки playbook', 'Автособранная информация о хосте', 'Inventory файл', 'Handler'], 'Автособранная информация о хосте', 'setup module собирает facts: OS, IP, память и т.д.'),

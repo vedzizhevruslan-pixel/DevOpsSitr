@@ -25,7 +25,7 @@ const q = (
 
 export const terraformQuestions: Question[] = [
   q('tf-01', 'basics', 'single', 'easy', 'Terraform — это:', ['Императивный скрипт', 'Декларативный IaC инструмент', 'Контейнерный runtime', 'CI/CD сервер'], 'Декларативный IaC инструмент', 'Terraform описывает желаемое состояние, plan/apply вычисляет изменения.'),
-  q('tf-02', 'workflow', 'order', 'medium', 'Правильный workflow Terraform:', ['apply → plan → init', 'init → plan → apply', 'destroy → init', 'apply без plan'], ['init → plan → apply', 'destroy → init'], 'init (провайдеры) → plan (preview) → apply (изменения).'),
+  q('tf-02', 'workflow', 'order', 'medium', 'Правильный workflow Terraform:', ['apply', 'plan', 'init', 'destroy'], ['init', 'plan', 'apply'], 'init (провайдеры) → plan (preview) → apply (изменения).'),
   q('tf-03', 'state', 'single', 'medium', 'Terraform state хранит:', ['Только код', 'Маппинг ресурсов в коде к реальным ID', 'Логи apply', 'Переменные окружения'], 'Маппинг ресурсов в коде к реальным ID', 'State — связь между HCL и реальной инфраструктурой.'),
   q('tf-04', 'state', 'single', 'hard', 'Remote state backend нужен для:', ['Ускорения plan', 'Командной работы и блокировки state', 'Шифрования кода', 'Удаления ресурсов'], 'Командной работы и блокировки state', 'S3+DynamoDB lock — стандарт для team collaboration.'),
   q('tf-05', 'resources', 'single', 'easy', 'resource блок в HCL описывает:', ['Переменную', 'Создаваемый инфраструктурный объект', 'Output', 'Provider'], 'Создаваемый инфраструктурный объект', 'resource "type" "name" { ... } — создаёт ресурс.'),

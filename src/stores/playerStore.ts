@@ -10,14 +10,22 @@ import type {
 } from '../types';
 import { GAME_CONFIG } from '../config/gameConfig';
 import { TOPIC_ORDER } from '../data/topics';
+import { waypointToProgress } from '../config/mapConfig';
 import { calculateMastery, getIslandStatus } from '../engines/masteryEngine';
 import {
   adjustStormMeter,
   findWeakestTopic,
   shouldTriggerStorm,
   getWeakSkillTags,
+  getStormTargetProgress,
 } from '../engines/stormEngine';
-import { checkAnswer, calculateQuizScore, selectQuizQuestions, selectStormQuestions, selectFinalReviewQuestions } from '../engines/quizEngine';
+import {
+  checkAnswer,
+  calculateQuizScore,
+  selectQuizQuestions,
+  selectStormQuestions,
+  selectFinalReviewQuestions,
+} from '../engines/quizEngine';
 import { checkAchievements, allTopicsCompleted } from '../data/achievements';
 import { getLessons, getPractice } from '../data/lessons';
 import { getTopicById } from '../data/topics';
@@ -50,6 +58,9 @@ function createInitialState(): PlayerState {
     stormMeter: 0,
     currentTopicId: 'linux',
     shipPosition: 0,
+    shipProgress: 0,
+    preStormProgress: null,
+    shipAnimating: false,
     topicProgress,
     mistakes: [],
     achievements: [],
@@ -67,6 +78,7 @@ function createInitialState(): PlayerState {
     stormActive: false,
     stormTargetTopicId: null,
     stormChallengeActive: false,
+    lastStormTriggeredAt: null,
     spacedReviewQueue: [],
   };
 }
@@ -113,6 +125,13 @@ function generateDailyQuest(): DailyQuest {
   };
 }
 
+function formatSelectedAnswer(selected: string | string[] | boolean | Record<string, string>): string {
+  if (typeof selected === 'boolean') return selected ? 'true' : 'false';
+  if (Array.isArray(selected)) return selected.join(', ');
+  if (typeof selected === 'object') return JSON.stringify(selected);
+  return String(selected);
+}
+
 interface AppStore extends PlayerState {
   currentScreen: Screen;
   quizSession: QuizSession | null;
@@ -120,13 +139,14 @@ interface AppStore extends PlayerState {
   xpAnimation: number | null;
   achievementPopup: string | null;
   stormOverlay: boolean;
+  stormAnimPhase: 'idle' | 'entering' | 'active' | 'returning';
 
   setScreen: (screen: Screen) => void;
   setCaptainName: (name: string) => void;
   completeChapter: (topicId: TopicId, chapterId: string) => void;
   completePractice: (topicId: TopicId, practiceId: string) => void;
   startQuiz: (topicId: TopicId, mode?: QuizSession['mode']) => void;
-  answerQuiz: (selected: string | string[] | boolean) => void;
+  answerQuiz: (selected: string | string[] | boolean | Record<string, string>) => void;
   nextQuizQuestion: () => void;
   finishQuiz: () => void;
   startStormChallenge: () => void;
@@ -134,11 +154,13 @@ interface AppStore extends PlayerState {
   resolveMistake: (questionId: string) => void;
   triggerStorm: () => void;
   completeStormChallenge: (passed: boolean) => void;
+  animateShipTo: (targetProgress: number, onComplete?: () => void) => void;
   setPdfMeta: (meta: import('../types').PdfOfferMeta | null) => void;
   checkTreasureUnlock: () => void;
   unlockTreasure: () => void;
-  resetProgress: (includePdf?: boolean) => void;
+  resetProgress: () => void;
   getCurrentMission: () => { topicId: TopicId; action: string; progress: string };
+  getUnresolvedMistakeCount: () => number;
 }
 
 export const useGameStore = create<AppStore>()(
@@ -151,10 +173,21 @@ export const useGameStore = create<AppStore>()(
       xpAnimation: null,
       achievementPopup: null,
       stormOverlay: false,
+      stormAnimPhase: 'idle',
 
       setScreen: (screen) => set({ currentScreen: screen }),
 
       setCaptainName: (name) => set({ captainName: name }),
+
+      getUnresolvedMistakeCount: () => get().mistakes.filter((m) => !m.resolved).length,
+
+      animateShipTo: (targetProgress, onComplete) => {
+        set({ shipAnimating: true, shipProgress: targetProgress });
+        setTimeout(() => {
+          set({ shipAnimating: false });
+          onComplete?.();
+        }, GAME_CONFIG.shipSailDurationMs);
+      },
 
       completeChapter: (topicId, chapterId) => {
         const state = get();
@@ -168,9 +201,7 @@ export const useGameStore = create<AppStore>()(
         const newCoins = state.coins + 10;
 
         let dailyQuest = state.dailyQuest;
-        if (!dailyQuest || dailyQuest.date !== today()) {
-          dailyQuest = generateDailyQuest();
-        }
+        if (!dailyQuest || dailyQuest.date !== today()) dailyQuest = generateDailyQuest();
         if (dailyQuest.type === 'chapter') {
           dailyQuest = { ...dailyQuest, progress: dailyQuest.progress + 1 };
           if (dailyQuest.progress >= dailyQuest.target && !dailyQuest.completed) {
@@ -180,18 +211,10 @@ export const useGameStore = create<AppStore>()(
         }
 
         const topicProgress = { ...state.topicProgress, [topicId]: progress };
-        const newState = {
-          ...state,
-          xp: state.xp + xpGain,
-          coins: newCoins,
-          topicProgress,
-          dailyQuest,
-          lastActiveDate: today(),
-          streak: updateStreak(state),
-        };
+        const newState = { ...state, xp: state.xp + xpGain, topicProgress, dailyQuest };
         const newAchievements = checkAchievements(newState);
         set({
-          xp: newState.xp,
+          xp: state.xp + xpGain,
           coins: newCoins,
           topicProgress,
           dailyQuest,
@@ -224,15 +247,15 @@ export const useGameStore = create<AppStore>()(
         const state = get();
         let questions;
         if (mode === 'storm') {
-          const tags = getWeakSkillTags(state.mistakes, state.topicProgress);
-          questions = selectStormQuestions(tags);
+          questions = selectStormQuestions(getWeakSkillTags(state.mistakes, state.topicProgress));
         } else if (mode === 'final-review') {
-          const weakTopics = TOPIC_ORDER.filter(
-            (id) => (state.topicProgress[id]?.masteryScore ?? 0) < 80,
-          );
+          const unresolved = state.mistakes.filter((m) => !m.resolved);
+          if (unresolved.length === 0) {
+            set({ finalReviewCompleted: true, currentScreen: 'error-bay' });
+            return;
+          }
           questions = selectFinalReviewQuestions(
-            state.mistakes.filter((m) => !m.resolved).map((m) => m.questionId),
-            weakTopics,
+            unresolved.map((m) => ({ questionId: m.questionId, wrongCount: m.wrongCount })),
           );
         } else {
           const recentIds = state.topicProgress[topicId].quizAttempts
@@ -258,14 +281,16 @@ export const useGameStore = create<AppStore>()(
         if (!session) return;
         const question = session.questions[session.currentIndex];
         const correct = checkAnswer(question, selected);
-        const isFirstAttempt = !session.answers.find((a) => a.questionId === question.id);
+        const priorAnswers = session.answers.filter((a) => a.questionId === question.id);
+        const isFirstAttempt = priorAnswers.length === 0;
+        const attemptCount = priorAnswers.length + 1;
 
         const answers = [
           ...session.answers,
-          { questionId: question.id, selected, correct, firstAttempt: isFirstAttempt },
+          { questionId: question.id, selected, correct, firstAttempt: isFirstAttempt, attemptCount },
         ];
 
-        let xpGain = correct ? GAME_CONFIG.xp.correctAnswer : 0;
+        let xpGain = correct && isFirstAttempt ? GAME_CONFIG.xp.correctAnswer : correct ? 2 : 0;
         let stormDelta = 0;
         let mistakes = [...state.mistakes];
         let correctStreak = state.correctStreak;
@@ -273,14 +298,19 @@ export const useGameStore = create<AppStore>()(
         let totalWrong = state.totalWrong;
 
         if (correct) {
-          correctStreak++;
+          if (isFirstAttempt) correctStreak++;
           totalCorrect++;
           if (session.mode === 'final-review') {
-            const existing = mistakes.find((m) => m.questionId === question.id);
-            if (existing && !existing.resolved) {
-              mistakes = mistakes.map((m) =>
-                m.questionId === question.id
-                  ? { ...m, resolved: true, correctAfterMistakeCount: m.correctAfterMistakeCount + 1 }
+            const idx = mistakes.findIndex((m) => m.questionId === question.id && !m.resolved);
+            if (idx >= 0) {
+              mistakes = mistakes.map((m, i) =>
+                i === idx
+                  ? {
+                      ...m,
+                      resolved: true,
+                      correctAfterMistakeCount: m.correctAfterMistakeCount + 1,
+                      reviewAttempts: m.reviewAttempts + 1,
+                    }
                   : m,
               );
               xpGain += GAME_CONFIG.xp.fixMistake;
@@ -291,32 +321,34 @@ export const useGameStore = create<AppStore>()(
           correctStreak = 0;
           totalWrong++;
           stormDelta += GAME_CONFIG.storm.wrongAnswer;
-          const existing = mistakes.find((m) => m.questionId === question.id);
-          if (existing) {
-            mistakes = mistakes.map((m) =>
-              m.questionId === question.id
+          const existingIdx = mistakes.findIndex((m) => m.questionId === question.id);
+          if (existingIdx >= 0) {
+            const existing = mistakes[existingIdx];
+            mistakes = mistakes.map((m, i) =>
+              i === existingIdx
                 ? {
                     ...m,
                     wrongCount: m.wrongCount + 1,
-                    selectedAnswer: String(selected),
+                    selectedAnswer: formatSelectedAnswer(selected),
                     lastMistakeAt: new Date().toISOString(),
+                    reviewAttempts: m.reviewAttempts + 1,
+                    resolved: false,
                   }
                 : m,
             );
-            stormDelta += GAME_CONFIG.storm.repeatWrongSkill;
+            if (!existing.resolved) stormDelta += GAME_CONFIG.storm.repeatWrongSkill;
           } else {
             mistakes.push({
               questionId: question.id,
               topicId: question.topicId,
               skillTag: question.skillTag,
               question: question.question,
-              selectedAnswer: String(selected),
-              correctAnswer: Array.isArray(question.correctAnswer)
-                ? question.correctAnswer.join(', ')
-                : String(question.correctAnswer),
+              selectedAnswer: formatSelectedAnswer(selected),
+              correctAnswer: formatSelectedAnswer(question.correctAnswer),
               explanation: question.explanation,
               wrongCount: 1,
               correctAfterMistakeCount: 0,
+              reviewAttempts: 0,
               firstMistakeAt: new Date().toISOString(),
               lastMistakeAt: new Date().toISOString(),
               resolved: false,
@@ -343,12 +375,9 @@ export const useGameStore = create<AppStore>()(
       },
 
       nextQuizQuestion: () => {
-        const state = get();
-        const session = state.quizSession;
-        if (!session) return;
-        if (session.currentIndex < session.questions.length - 1) {
-          set({ quizSession: { ...session, currentIndex: session.currentIndex + 1 } });
-        }
+        const session = get().quizSession;
+        if (!session || session.currentIndex >= session.questions.length - 1) return;
+        set({ quizSession: { ...session, currentIndex: session.currentIndex + 1 } });
       },
 
       finishQuiz: () => {
@@ -358,16 +387,13 @@ export const useGameStore = create<AppStore>()(
 
         const { score, total, percent } = calculateQuizScore(session.answers);
         const topicId = session.topicId;
-        const progress = { ...state.topicProgress[topicId] };
 
         if (session.mode === 'topic') {
+          const progress = { ...state.topicProgress[topicId] };
           const firstAccuracies = session.answers
             .filter((a) => a.firstAttempt)
             .map((a) => (a.correct ? 100 : 0));
-          progress.firstAttemptAccuracy = [
-            ...progress.firstAttemptAccuracy,
-            ...firstAccuracies,
-          ];
+          progress.firstAttemptAccuracy = [...progress.firstAttemptAccuracy, ...firstAccuracies];
           progress.quizAttempts = [
             ...progress.quizAttempts,
             {
@@ -388,13 +414,12 @@ export const useGameStore = create<AppStore>()(
           else if (percent < 70) stormDelta = GAME_CONFIG.storm.quizBelow70;
           else if (percent < 80) stormDelta = GAME_CONFIG.storm.quiz70to79;
 
-          let xpGain = percent >= 100 ? GAME_CONFIG.xp.perfectQuiz : percent >= 70 ? 50 : 20;
+          const xpGain = percent >= 100 ? GAME_CONFIG.xp.perfectQuiz : percent >= 70 ? 50 : 20;
           const stormMeter = adjustStormMeter(state.stormMeter, stormDelta);
-
           const topicProgress = { ...state.topicProgress, [topicId]: progress };
           const idx = TOPIC_ORDER.indexOf(topicId);
           const nextTopic = TOPIC_ORDER[idx + 1];
-          let shipPosition = state.shipPosition;
+          let shipProgress = state.shipProgress;
           let currentTopicId = state.currentTopicId;
 
           if (percent >= GAME_CONFIG.unlockNextIslandMastery && nextTopic) {
@@ -403,19 +428,20 @@ export const useGameStore = create<AppStore>()(
               nextProgress.status = 'available';
               topicProgress[nextTopic] = nextProgress;
             }
-            if (idx >= shipPosition) {
-              shipPosition = idx + 1;
+            const targetProgress = waypointToProgress(idx + 1);
+            if (targetProgress > shipProgress) {
+              shipProgress = targetProgress;
               currentTopicId = nextTopic;
             }
           }
 
-          const badge = getTopicById(topicId)?.badgeRu;
           const newState = {
             ...state,
             xp: state.xp + xpGain,
             topicProgress,
             stormMeter,
-            shipPosition,
+            shipProgress,
+            shipPosition: idx + 1,
             currentTopicId,
           };
           const newAchievements = checkAchievements(newState);
@@ -426,27 +452,30 @@ export const useGameStore = create<AppStore>()(
             xp: state.xp + xpGain,
             topicProgress,
             stormMeter,
-            shipPosition,
+            shipProgress,
+            shipPosition: idx + 1,
             currentTopicId,
+            shipAnimating: true,
             xpAnimation: xpGain,
-            achievements: [...state.achievements, ...newAchievements, ...(badge ? [] : [])],
+            achievements: [...state.achievements, ...newAchievements],
             achievementPopup: newAchievements[0] || null,
           });
 
+          setTimeout(() => set({ shipAnimating: false }), GAME_CONFIG.shipSailDurationMs);
+
           if (shouldTriggerStorm({ ...state, stormMeter })) {
-            setTimeout(() => get().triggerStorm(), 1500);
+            setTimeout(() => get().triggerStorm(), GAME_CONFIG.shipSailDurationMs + 500);
           }
         } else if (session.mode === 'storm') {
           get().completeStormChallenge(percent >= 80);
         } else if (session.mode === 'final-review') {
-          const unresolved = state.mistakes.filter((m) => !m.resolved).length;
-          const sessionResolved = session.answers.filter((a) => a.correct).length;
-          if (unresolved - sessionResolved <= 0 || percent >= 80) {
+          const unresolved = get().mistakes.filter((m) => !m.resolved).length;
+          if (unresolved === 0) {
             set({
               finalReviewCompleted: true,
               xp: state.xp + GAME_CONFIG.xp.finalReview,
               quizSession: null,
-              currentScreen: 'map',
+              currentScreen: 'error-bay',
               xpAnimation: GAME_CONFIG.xp.finalReview,
             });
           } else {
@@ -458,8 +487,9 @@ export const useGameStore = create<AppStore>()(
       },
 
       startStormChallenge: () => {
+        set({ stormChallengeActive: true, stormOverlay: false });
         get().startQuiz(get().stormTargetTopicId || 'linux', 'storm');
-        set({ stormChallengeActive: true, currentScreen: 'storm-challenge' });
+        set({ currentScreen: 'storm-challenge' });
       },
 
       startFinalReview: () => {
@@ -468,34 +498,44 @@ export const useGameStore = create<AppStore>()(
       },
 
       resolveMistake: (questionId) => {
-        const state = get();
         set({
-          mistakes: state.mistakes.map((m) =>
-            m.questionId === questionId ? { ...m, resolved: true } : m,
+          mistakes: get().mistakes.map((m) =>
+            m.questionId === questionId ? { ...m, resolved: true, reviewAttempts: m.reviewAttempts + 1 } : m,
           ),
         });
       },
 
       triggerStorm: () => {
         const state = get();
+        if (!shouldTriggerStorm(state)) return;
         const weakest = findWeakestTopic(state.topicProgress, state.mistakes);
         if (!weakest) return;
+
+        const targetProgress = getStormTargetProgress(weakest);
         set({
           stormActive: true,
           stormTargetTopicId: weakest,
           stormOverlay: true,
+          stormAnimPhase: 'entering',
+          preStormProgress: state.shipProgress,
+          lastStormTriggeredAt: Date.now(),
           currentTopicId: weakest,
         });
-        setTimeout(() => set({ stormOverlay: false }), 4000);
+
+        get().animateShipTo(targetProgress, () => {
+          set({ stormAnimPhase: 'active', stormOverlay: true });
+        });
       },
 
       completeStormChallenge: (passed) => {
         const state = get();
         if (passed) {
+          const restoreProgress = state.preStormProgress ?? state.shipProgress;
           set({
             stormActive: false,
             stormChallengeActive: false,
             stormMeter: adjustStormMeter(state.stormMeter, GAME_CONFIG.storm.stormChallengePass),
+            stormAnimPhase: 'returning',
             xp: state.xp + GAME_CONFIG.xp.stormChallenge,
             quizSession: null,
             currentScreen: 'map',
@@ -504,6 +544,9 @@ export const useGameStore = create<AppStore>()(
               ? state.achievements
               : [...state.achievements, 'storm-master-earned'],
           });
+          get().animateShipTo(restoreProgress, () => {
+            set({ preStormProgress: null, stormAnimPhase: 'idle', stormOverlay: false });
+          });
         } else {
           const target = state.stormTargetTopicId;
           if (target) {
@@ -511,6 +554,9 @@ export const useGameStore = create<AppStore>()(
             set({
               topicProgress: { ...state.topicProgress, [target]: progress },
               stormChallengeActive: false,
+              stormActive: false,
+              stormOverlay: false,
+              stormAnimPhase: 'idle',
               quizSession: null,
               currentScreen: 'lesson',
             });
@@ -523,9 +569,8 @@ export const useGameStore = create<AppStore>()(
       checkTreasureUnlock: () => {
         const state = get();
         const allDone = allTopicsCompleted(state);
-        const canUnlock =
-          allDone && state.finalReviewCompleted && state.pdfMeta && !state.treasureUnlocked;
-        if (canUnlock) {
+        const noMistakes = state.mistakes.filter((m) => !m.resolved).length === 0;
+        if (allDone && state.finalReviewCompleted && noMistakes && state.pdfMeta && !state.treasureUnlocked) {
           get().unlockTreasure();
         }
       },
@@ -548,6 +593,7 @@ export const useGameStore = create<AppStore>()(
           currentScreen: 'map',
           quizSession: null,
           pdfMeta: null,
+          stormAnimPhase: 'idle',
         });
       },
 
@@ -592,6 +638,22 @@ export const useGameStore = create<AppStore>()(
     {
       name: 'devops-pirate-voyage-save',
       version: GAME_CONFIG.version,
+      migrate: (persisted: unknown, version: number) => {
+        const state = persisted as PlayerState & Record<string, unknown>;
+        if (version < 2) {
+          const sp = typeof state.shipPosition === 'number' ? state.shipPosition : 0;
+          state.shipProgress = waypointToProgress(sp);
+          state.preStormProgress = null;
+          state.shipAnimating = false;
+          state.lastStormTriggeredAt = null;
+          state.mistakes = (state.mistakes ?? []).map((m) => ({
+            ...m,
+            reviewAttempts: (m as { reviewAttempts?: number }).reviewAttempts ?? 0,
+          }));
+        }
+        state.version = GAME_CONFIG.version;
+        return state;
+      },
       partialize: (state) => {
         const {
           currentScreen: _,
@@ -599,9 +661,10 @@ export const useGameStore = create<AppStore>()(
           xpAnimation: ___,
           achievementPopup: ____,
           stormOverlay: _____,
+          stormAnimPhase: ______,
           ...rest
         } = state;
-        return rest as PlayerState & { pdfMeta: typeof state.pdfMeta };
+        return rest as unknown as PlayerState & Record<string, unknown>;
       },
     },
   ),

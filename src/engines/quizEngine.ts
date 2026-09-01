@@ -11,6 +11,20 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
+export function getEffectiveQuestionType(question: Question): Question['type'] {
+  if (question.type === 'command' || question.type === 'scenario') return 'single';
+  if (question.type === 'config') return 'config';
+  return question.type;
+}
+
+export function isOrderQuestion(question: Question): boolean {
+  return question.type === 'order';
+}
+
+export function isMultipleQuestion(question: Question): boolean {
+  return question.type === 'multiple';
+}
+
 export function selectQuizQuestions(
   topicId: TopicId,
   count = GAME_CONFIG.quizQuestionsPerAttempt,
@@ -38,54 +52,75 @@ export function selectStormQuestions(
   count = GAME_CONFIG.stormChallengeQuestions,
 ): Question[] {
   const pool = ALL_QUESTIONS.filter((q) => weakSkillTags.includes(q.skillTag));
-  return shuffle(pool.length > 0 ? pool : ALL_QUESTIONS).slice(0, count);
+  const fallback = ALL_QUESTIONS;
+  return shuffle(pool.length >= count ? pool : [...pool, ...fallback]).slice(0, count);
 }
 
 export function selectFinalReviewQuestions(
-  mistakeQuestionIds: string[],
-  weakTopicIds: TopicId[],
-  count = GAME_CONFIG.finalReviewQuestions,
+  unresolvedMistakes: { questionId: string; wrongCount: number }[],
+  count = GAME_CONFIG.finalReviewBatchSize,
 ): Question[] {
-  const fromMistakes = mistakeQuestionIds
-    .map((id) => ALL_QUESTIONS.find((q) => q.id === id))
-    .filter((q): q is Question => !!q);
-
-  const weakPool = ALL_QUESTIONS.filter(
-    (q) => weakTopicIds.includes(q.topicId) && !fromMistakes.find((m) => m.id === q.id),
-  );
-
-  const combined = [...shuffle(fromMistakes), ...shuffle(weakPool)];
-  const unique: Question[] = [];
-  for (const q of combined) {
-    if (!unique.find((u) => u.id === q.id)) unique.push(q);
-    if (unique.length >= count) break;
+  const sorted = [...unresolvedMistakes].sort((a, b) => b.wrongCount - a.wrongCount);
+  const questions: Question[] = [];
+  for (const m of sorted) {
+    const q = ALL_QUESTIONS.find((x) => x.id === m.questionId);
+    if (q && !questions.find((x) => x.id === q.id)) questions.push(q);
+    if (questions.length >= count) break;
   }
-  return unique.slice(0, count);
+  return questions;
+}
+
+function arraysEqualOrdered(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  return a.every((v, i) => v.trim() === b[i].trim());
+}
+
+function arraysEqualUnordered(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  const sortedA = [...a].map((s) => s.trim()).sort();
+  const sortedB = [...b].map((s) => s.trim()).sort();
+  return sortedA.every((v, i) => v === sortedB[i]);
 }
 
 export function checkAnswer(
   question: Question,
-  selected: string | string[] | boolean,
+  selected: string | string[] | boolean | Record<string, string>,
 ): boolean {
   const correct = question.correctAnswer;
+
   if (typeof correct === 'boolean') {
     return selected === correct;
   }
+
+  if (question.type === 'match' && typeof selected === 'object' && !Array.isArray(selected)) {
+    const matchCorrect = correct as unknown as Record<string, string>;
+    const keys = Object.keys(matchCorrect);
+    return keys.every((k) => (selected as Record<string, string>)[k] === matchCorrect[k]);
+  }
+
   if (Array.isArray(correct)) {
     if (!Array.isArray(selected)) return false;
-    const sortedC = [...correct].sort();
-    const sortedS = [...selected].sort();
-    return JSON.stringify(sortedC) === JSON.stringify(sortedS);
+    if (question.type === 'order') {
+      return arraysEqualOrdered(selected as string[], correct);
+    }
+    return arraysEqualUnordered(selected as string[], correct);
   }
+
   if (Array.isArray(selected)) {
-    return selected.length === 1 && selected[0] === correct;
+    return selected.length === 1 && selected[0].trim() === String(correct).trim();
   }
+
   return String(selected).trim() === String(correct).trim();
 }
 
-export function formatAnswer(answer: string | string[] | boolean): string {
-  if (typeof answer === 'boolean') return answer ? 'True' : 'False';
+export function formatAnswer(answer: string | string[] | boolean | Record<string, string>): string {
+  if (typeof answer === 'boolean') return answer ? 'Верно' : 'Неверно';
   if (Array.isArray(answer)) return answer.join(' → ');
+  if (typeof answer === 'object') {
+    return Object.entries(answer)
+      .map(([k, v]) => `${k} → ${v}`)
+      .join('; ');
+  }
   return String(answer);
 }
 
@@ -99,4 +134,9 @@ export function calculateQuizScore(
 
 export function shuffleOptions(options: string[]): string[] {
   return shuffle(options);
+}
+
+export function getOrderItems(question: Question): string[] {
+  if (question.type !== 'order' || !question.options) return [];
+  return shuffleOptions([...question.options]);
 }

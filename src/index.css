@@ -9,7 +9,6 @@
   --color-wood-mid: #5c3d1e;
   --color-wood-light: #8b6914;
   --color-parchment: #f4e4bc;
-  --color-parchment-dark: #d4c49a;
   --color-gold: #ffd700;
   --color-gold-dark: #b8860b;
   --color-storm: #1a1a2e;
@@ -77,6 +76,14 @@ body {
 
 .treasure-glow {
   animation: glow-pulse 2s ease-in-out infinite;
+}
+
+.text-parchment {
+  color: var(--color-parchment);
+}
+
+.font-display {
+  font-family: Georgia, 'Times New Roman', serif;
 }
 
 .scrollbar-thin::-webkit-scrollbar {

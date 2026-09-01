@@ -1,5 +1,6 @@
 import type { TopicId, TopicProgress, MistakeRecord, IslandStatus } from '../types';
 import { GAME_CONFIG } from '../config/gameConfig';
+import { getPractice } from '../data/lessons';
 
 export function calculateMastery(
   progress: TopicProgress,
@@ -11,7 +12,7 @@ export function calculateMastery(
 
   const quizScore = progress.lastQuizScore || progress.bestQuizScore || 0;
   const practiceTotal = progress.practiceCompleted.length;
-  const practiceMax = 4;
+  const practiceMax = Math.max(1, getPractice(progress.topicId).length);
   const practiceScore = Math.min(100, (practiceTotal / practiceMax) * 100);
 
   const chapterTotal = progress.chaptersCompleted.length;

@@ -43,7 +43,9 @@ export interface Question {
   difficulty: Difficulty;
   question: string;
   options?: string[];
-  correctAnswer: string | string[] | boolean;
+  matchLeft?: string[];
+  matchRight?: string[];
+  correctAnswer: string | string[] | boolean | Record<string, string>;
   explanation: string;
   remember?: string;
   configSnippet?: string;
@@ -96,6 +98,7 @@ export interface MistakeRecord {
   explanation: string;
   wrongCount: number;
   correctAfterMistakeCount: number;
+  reviewAttempts: number;
   firstMistakeAt: string;
   lastMistakeAt: string;
   resolved: boolean;
@@ -163,7 +166,11 @@ export interface PlayerState {
   tickets: number;
   stormMeter: number;
   currentTopicId: TopicId;
+  /** @deprecated use shipProgress */
   shipPosition: number;
+  shipProgress: number;
+  preStormProgress: number | null;
+  shipAnimating: boolean;
   topicProgress: Record<TopicId, TopicProgress>;
   mistakes: MistakeRecord[];
   achievements: string[];
@@ -181,6 +188,7 @@ export interface PlayerState {
   stormActive: boolean;
   stormTargetTopicId: TopicId | null;
   stormChallengeActive: boolean;
+  lastStormTriggeredAt: number | null;
   spacedReviewQueue: string[];
 }
 
@@ -206,9 +214,10 @@ export interface QuizSession {
   currentIndex: number;
   answers: Array<{
     questionId: string;
-    selected: string | string[] | boolean;
+    selected: string | string[] | boolean | Record<string, string>;
     correct: boolean;
     firstAttempt: boolean;
+    attemptCount: number;
   }>;
   mode: 'topic' | 'storm' | 'final-review' | 'spaced' | 'legendary';
 }

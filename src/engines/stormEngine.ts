@@ -1,6 +1,9 @@
 import type { TopicId, MistakeRecord, TopicProgress, PlayerState } from '../types';
 import { GAME_CONFIG } from '../config/gameConfig';
 import { TOPIC_ORDER } from '../data/topics';
+import { getWeakestSkillTags } from './skillEngine';
+import { getWaypointIndex } from '../config/mapConfig';
+import { waypointToProgress } from '../config/mapConfig';
 
 export function adjustStormMeter(current: number, delta: number): number {
   return Math.max(0, Math.min(100, current + delta));
@@ -32,8 +35,8 @@ export function findWeakestTopic(
     const topicMistakes = mistakes.filter((m) => m.topicId === id && !m.resolved);
     const score =
       p.masteryScore -
-      topicMistakes.length * 5 -
-      mistakes.filter((m) => m.topicId === id).reduce((s, m) => s + m.wrongCount, 0) * 2;
+      topicMistakes.length * 8 -
+      mistakes.filter((m) => m.topicId === id).reduce((s, m) => s + m.wrongCount, 0) * 3;
 
     if (score < lowestScore) {
       lowestScore = score;
@@ -47,34 +50,37 @@ export function getWeakSkillTags(
   mistakes: MistakeRecord[],
   topicProgress: Record<TopicId, TopicProgress>,
 ): string[] {
-  const tagCounts: Record<string, number> = {};
-  for (const m of mistakes.filter((m) => !m.resolved)) {
-    tagCounts[m.skillTag] = (tagCounts[m.skillTag] || 0) + m.wrongCount;
+  return getWeakestSkillTags(mistakes, topicProgress, 12);
+}
+
+export function canTriggerStorm(state: PlayerState): boolean {
+  if (state.stormActive || state.stormChallengeActive) return false;
+  if (state.stormMeter < GAME_CONFIG.stormTriggerThreshold) return false;
+  if (state.lastStormTriggeredAt) {
+    const elapsed = Date.now() - state.lastStormTriggeredAt;
+    if (elapsed < GAME_CONFIG.stormCooldownMs) return false;
   }
-  for (const id of TOPIC_ORDER) {
-    const p = topicProgress[id];
-    if (p && p.masteryScore < GAME_CONFIG.weakMasteryThreshold) {
-      tagCounts[id] = (tagCounts[id] || 0) + 3;
-    }
-  }
-  return Object.entries(tagCounts)
-    .sort((a, b) => b[1] - a[1])
-    .map(([tag]) => tag);
+  return true;
 }
 
 export function shouldTriggerStorm(state: PlayerState): boolean {
-  return state.stormMeter >= GAME_CONFIG.stormTriggerThreshold && !state.stormActive;
+  return canTriggerStorm(state);
+}
+
+export function getStormTargetProgress(topicId: TopicId): number {
+  const idx = getWaypointIndex(topicId);
+  return waypointToProgress(idx >= 0 ? idx : 0);
 }
 
 export function getStormMessage(topicId: TopicId): string {
-  const messages: Record<TopicId, string> = {
-    linux: 'Капитан, команда забыла основы Linux. Нас относит назад!',
-    networks: 'Капитан, команда забыла основы сетей. Нас относит назад!',
-    ansible: 'Капитан, автоматизация дала сбой! Возвращаемся к Ansible!',
-    terraform: 'Капитан, инфраструктура рушится! Назад к Terraform!',
-    docker: 'Капитан, контейнеры протекают! Возвращаемся в порт Docker!',
-    kubernetes: 'Капитан, флот теряет управление! Назад к Kubernetes!',
-    'gitlab-cicd': 'Капитан, pipeline сломан! Возвращаемся на верфь!',
+  const names: Record<TopicId, string> = {
+    linux: 'Linux Terminal Cave',
+    networks: 'Network Lighthouse',
+    ansible: 'Automation Fleet Base',
+    terraform: 'Infrastructure Island',
+    docker: 'Container Port',
+    kubernetes: 'Orchestration Archipelago',
+    'gitlab-cicd': 'Automation Shipyard',
   };
-  return messages[topicId] || 'Шторм незнания бросает корабль назад!';
+  return `Капитан! ${names[topicId] || topicId} стал нашим слабым местом. Шторм относит корабль назад!`;
 }

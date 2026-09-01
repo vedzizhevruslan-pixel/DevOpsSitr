@@ -1,8 +1,11 @@
 export const GAME_CONFIG = {
-  version: 1,
+  version: 2,
   quizQuestionsPerAttempt: 10,
   stormChallengeQuestions: 5,
   finalReviewQuestions: 15,
+  finalReviewBatchSize: 10,
+  stormCooldownMs: 5 * 60 * 1000,
+  shipSailDurationMs: 2500,
   unlockNextIslandMastery: 70,
   weakMasteryThreshold: 80,
   stormTriggerThreshold: 100,
