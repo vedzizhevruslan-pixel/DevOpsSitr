@@ -7,20 +7,41 @@ interface Props {
   topicId: TopicId;
   exercises: PracticeExercise[];
   completed: string[];
+  onAllDone?: () => void;
 }
 
-export function PracticeRouter({ topicId, exercises, completed }: Props) {
+export function PracticeRouter({ topicId, exercises, completed, onAllDone }: Props) {
   const [idx, setIdx] = useState(0);
   const exercise = exercises[idx];
   const completePractice = useGameStore((s) => s.completePractice);
 
-  if (!exercise) return <p className="text-cyan-300">Практика завершена!</p>;
+  if (!exercise) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-cyan-300 mb-4">Практика завершена!</p>
+        {onAllDone && (
+          <button
+            type="button"
+            onClick={onAllDone}
+            className="px-6 py-2 bg-amber-600 hover:bg-amber-500 rounded-lg font-semibold text-white"
+          >
+            К квизу →
+          </button>
+        )}
+      </div>
+    );
+  }
 
   const onComplete = (correct: boolean) => {
     if (correct && !completed.includes(exercise.id)) {
       completePractice(topicId, exercise.id);
     }
-    if (idx < exercises.length - 1) setIdx(idx + 1);
+    if (idx < exercises.length - 1) {
+      setIdx(idx + 1);
+    } else if (correct && onAllDone) {
+      // last exercise done — allow going to quiz after a short beat
+      setTimeout(() => onAllDone(), 600);
+    }
   };
 
   switch (topicId) {

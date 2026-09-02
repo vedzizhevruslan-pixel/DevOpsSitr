@@ -135,11 +135,17 @@ export function LessonView() {
                   completeChapter(currentTopicId, currentChapter.id);
                   if (chapterIndex < lessons.length - 1) {
                     setChapterIndex(chapterIndex + 1);
+                  } else {
+                    setTab('practice');
                   }
                 }}
                 className="px-6 py-2 bg-amber-600 hover:bg-amber-500 rounded-lg font-semibold text-white"
               >
-                {progress.chaptersCompleted.includes(currentChapter.id) ? 'Далее →' : 'Понятно → +10 XP'}
+                {chapterIndex >= lessons.length - 1
+                  ? 'К практике →'
+                  : progress.chaptersCompleted.includes(currentChapter.id)
+                    ? 'Далее →'
+                    : 'Понятно → +10 XP'}
               </button>
             </div>
           </motion.div>
@@ -151,6 +157,7 @@ export function LessonView() {
               topicId={currentTopicId}
               exercises={practice}
               completed={progress.practiceCompleted}
+              onAllDone={() => setTab('quiz')}
             />
           </motion.div>
         )}
