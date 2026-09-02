@@ -1,0 +1,61 @@
+import { iq } from './helpers';
+
+export const gitlabInterviewQuestions = [
+  iq(
+    'CICD-01',
+    'gitlab-cicd',
+    'pipeline-design',
+    'multiple',
+    'hard',
+    'Как построить качественный Production-Ready CI/CD Pipeline?',
+    ['Lint + unit tests', 'Security scanning (SAST/DAST)', 'Build + artifact versioning', 'Deploy with rollback strategy'],
+    ['Lint + unit tests', 'Security scanning (SAST/DAST)', 'Build + artifact versioning', 'Deploy with rollback strategy'],
+    'Production pipeline: lint → test → security scan → build immutable artifact → deploy staging → smoke tests → prod with approval/rollback. GitOps optional.',
+  ),
+  iq(
+    'CICD-02',
+    'gitlab-cicd',
+    'gitlab-jobs',
+    'config',
+    'medium',
+    'Как запустить несколько jobs параллельно в GitLab CI?',
+    ['Jobs в одном stage выполняются параллельно', 'Jobs в разных stages параллельны', 'Только один job за раз', 'parallel: в script'],
+    'Jobs в одном stage выполняются параллельно',
+    'Stages последовательны. Jobs внутри одного stage — параллельно. Для matrix: parallel: matrix. Для зависимостей: needs.',
+    {
+      configSnippet: 'stages:\n  - build\n  - test\n\nbuild_frontend:\n  stage: build\n\nbuild_backend:\n  stage: build\n\ntest_unit:\n  stage: test',
+    },
+  ),
+  iq(
+    'CICD-03',
+    'gitlab-cicd',
+    'helm-templates',
+    'single',
+    'medium',
+    'Чем indent отличается от nindent в Helm-шаблонах?',
+    [
+      'indent добавляет отступ к каждой строке; nindent добавляет отступ и убирает leading newline',
+      'nindent — только для numbers',
+      'indent — только для arrays',
+      'Ничем',
+    ],
+    'indent добавляет отступ к каждой строке; nindent добавляет отступ и убирает leading newline',
+    'indent N . | content — N spaces per line. nindent N . | content — same + trim leading newline. Полезно для вложенных YAML blocks.',
+  ),
+  iq(
+    'CICD-04',
+    'gitlab-cicd',
+    'gitops',
+    'single',
+    'medium',
+    'Что такое GitOps? Чем отличается от классического CI/CD?',
+    [
+      'Git — single source of truth; desired state in repo; controller reconciles cluster',
+      'GitOps — только для Terraform',
+      'Классический CI/CD не использует Git',
+      'GitOps — push-based deploy only',
+    ],
+    'Git — single source of truth; desired state in repo; controller reconciles cluster',
+    'GitOps: declarative manifests in Git, pull-based reconciliation (ArgoCD, Flux). Classic CI/CD: push deploy from pipeline. GitOps adds audit trail and drift detection.',
+  ),
+];

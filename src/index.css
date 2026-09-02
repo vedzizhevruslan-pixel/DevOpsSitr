@@ -1,0 +1,104 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Segoe UI", system-ui, sans-serif;
+  --color-ocean-deep: #0a1628;
+  --color-ocean-mid: #0d2847;
+  --color-ocean-light: #1a4a7a;
+  --color-wood-dark: #3d2817;
+  --color-wood-mid: #5c3d1e;
+  --color-wood-light: #8b6914;
+  --color-parchment: #f4e4bc;
+  --color-gold: #ffd700;
+  --color-gold-dark: #b8860b;
+  --color-storm: #1a1a2e;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-display);
+  background: var(--color-ocean-deep);
+  color: #e8f4fc;
+  overflow-x: hidden;
+}
+
+/* Ocean wave animation */
+@keyframes wave {
+  0%, 100% { transform: translateX(0) translateY(0); }
+  50% { transform: translateX(-25px) translateY(5px); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-8px) rotate(1deg); }
+}
+
+@keyframes ship-sail {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-4px) rotate(2deg); }
+}
+
+@keyframes lightning {
+  0%, 90%, 100% { opacity: 0; }
+  92%, 94% { opacity: 1; }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(255, 215, 0, 0.6); }
+}
+
+@keyframes xp-pop {
+  0% { transform: scale(0.5); opacity: 0; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.wave-bg {
+  animation: wave 8s ease-in-out infinite;
+}
+
+.ship-float {
+  animation: ship-sail 3s ease-in-out infinite;
+}
+
+.lightning-flash {
+  animation: lightning 4s infinite;
+}
+
+@keyframes shimmer {
+  0%, 100% { transform: translateX(-30%); }
+  50% { transform: translateX(30%); }
+}
+
+.treasure-glow {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+.text-parchment {
+  color: var(--color-parchment);
+}
+
+.font-display {
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.2);
+  border-radius: 3px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(255,215,0,0.3);
+  border-radius: 3px;
+}
