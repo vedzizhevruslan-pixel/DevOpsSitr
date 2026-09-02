@@ -102,7 +102,8 @@ function getAllChapterIds(topicId: TopicId): string[] {
 }
 
 function getAllPracticeIds(topicId: TopicId): string[] {
-  const prefixes: Record<TopicId, string> = {
+  if (topicId === 'captain-exam') return [];
+  const prefixes: Record<Exclude<TopicId, 'captain-exam'>, string> = {
     linux: 'linux-p',
     networks: 'net-p',
     ansible: 'ans-p',

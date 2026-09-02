@@ -7,6 +7,7 @@ import type {
   Screen,
   QuizSession,
   DailyQuest,
+  CaptainExamResult,
 } from '../types';
 import { GAME_CONFIG } from '../config/gameConfig';
 import { TOPIC_ORDER } from '../data/topics';
@@ -25,6 +26,7 @@ import {
   selectQuizQuestions,
   selectStormQuestions,
   selectFinalReviewQuestions,
+  selectCaptainExamQuestions,
 } from '../engines/quizEngine';
 import { checkAchievements, allTopicsCompleted } from '../data/achievements';
 import { getLessons, getPractice } from '../data/lessons';
@@ -69,6 +71,11 @@ function createInitialState(): PlayerState {
     dailyQuest: null,
     soundEnabled: false,
     finalReviewCompleted: false,
+    captainExamCompleted: false,
+    captainExamPassed: false,
+    captainExamBestScore: 0,
+    captainExamAttempts: 0,
+    captainExamLastResult: null,
     treasureUnlocked: false,
     legendaryMode: false,
     correctStreak: 0,
@@ -140,6 +147,7 @@ interface AppStore extends PlayerState {
   achievementPopup: string | null;
   stormOverlay: boolean;
   stormAnimPhase: 'idle' | 'entering' | 'active' | 'returning';
+  captainExamLastResult: CaptainExamResult | null;
 
   setScreen: (screen: Screen) => void;
   setCaptainName: (name: string) => void;
@@ -151,6 +159,7 @@ interface AppStore extends PlayerState {
   finishQuiz: () => void;
   startStormChallenge: () => void;
   startFinalReview: () => void;
+  startCaptainExam: () => void;
   resolveMistake: (questionId: string) => void;
   triggerStorm: () => void;
   completeStormChallenge: (passed: boolean) => void;
@@ -174,6 +183,7 @@ export const useGameStore = create<AppStore>()(
       achievementPopup: null,
       stormOverlay: false,
       stormAnimPhase: 'idle',
+      captainExamLastResult: null,
 
       setScreen: (screen) => set({ currentScreen: screen }),
 
@@ -257,11 +267,23 @@ export const useGameStore = create<AppStore>()(
           questions = selectFinalReviewQuestions(
             unresolved.map((m) => ({ questionId: m.questionId, wrongCount: m.wrongCount })),
           );
+        } else if (mode === 'captain-exam') {
+          const recentIds = state.captainExamLastResult
+            ? state.quizSession?.questions.map((q) => q.id) ?? []
+            : [];
+          questions = selectCaptainExamQuestions(
+            getWeakSkillTags(state.mistakes, state.topicProgress),
+            recentIds,
+          );
         } else {
-          const recentIds = state.topicProgress[topicId].quizAttempts
-            .flatMap((a) => a.questionIds)
-            .slice(-20);
-          questions = selectQuizQuestions(topicId, GAME_CONFIG.quizQuestionsPerAttempt, recentIds);
+          const attemptNumber = state.topicProgress[topicId].quizAttempts.length;
+          questions = selectQuizQuestions(
+            topicId,
+            GAME_CONFIG.quizQuestionsPerAttempt,
+            state.topicProgress[topicId].quizAttempts.flatMap((a) => a.questionIds).slice(-30),
+            [],
+            attemptNumber,
+          );
         }
         set({
           quizSession: {
@@ -271,7 +293,7 @@ export const useGameStore = create<AppStore>()(
             answers: [],
             mode,
           },
-          currentScreen: 'quiz',
+          currentScreen: mode === 'captain-exam' ? 'captain-exam' : 'quiz',
         });
       },
 
@@ -352,6 +374,8 @@ export const useGameStore = create<AppStore>()(
               firstMistakeAt: new Date().toISOString(),
               lastMistakeAt: new Date().toISOString(),
               resolved: false,
+              source: question.source,
+              firstAttemptCorrect: false,
             });
           }
         }
@@ -481,6 +505,37 @@ export const useGameStore = create<AppStore>()(
           } else {
             set({ quizSession: null, currentScreen: 'error-bay' });
           }
+        } else if (session.mode === 'captain-exam') {
+          const byTopic: CaptainExamResult['byTopic'] = {};
+          const wrongSkills: string[] = [];
+          session.questions.forEach((q) => {
+            const ans = session.answers.filter((a) => a.questionId === q.id).pop();
+            const topicKey = q.topicId;
+            if (!byTopic[topicKey]) byTopic[topicKey] = { correct: 0, total: 0 };
+            byTopic[topicKey].total++;
+            if (ans?.correct) byTopic[topicKey].correct++;
+            else if (ans) wrongSkills.push(q.skillTag);
+          });
+          const result: CaptainExamResult = {
+            score,
+            total,
+            percent,
+            byTopic,
+            weakSkills: [...new Set(wrongSkills)],
+            date: new Date().toISOString(),
+          };
+          const xpGain = percent >= 80 ? 100 : percent >= 60 ? 50 : 25;
+          set({
+            quizSession: null,
+            currentScreen: 'captain-exam',
+            captainExamCompleted: true,
+            captainExamPassed: percent >= 80,
+            captainExamBestScore: Math.max(state.captainExamBestScore, percent),
+            captainExamAttempts: state.captainExamAttempts + 1,
+            captainExamLastResult: result,
+            xp: state.xp + xpGain,
+            xpAnimation: xpGain,
+          });
         } else {
           set({ quizSession: null, currentScreen: 'map' });
         }
@@ -495,6 +550,11 @@ export const useGameStore = create<AppStore>()(
       startFinalReview: () => {
         get().startQuiz('linux', 'final-review');
         set({ currentScreen: 'final-review' });
+      },
+
+      startCaptainExam: () => {
+        get().startQuiz('linux', 'captain-exam');
+        set({ currentScreen: 'captain-exam', captainExamLastResult: null });
       },
 
       resolveMistake: (questionId) => {
@@ -650,6 +710,13 @@ export const useGameStore = create<AppStore>()(
             ...m,
             reviewAttempts: (m as { reviewAttempts?: number }).reviewAttempts ?? 0,
           }));
+        }
+        if (version < 3) {
+          state.captainExamCompleted = false;
+          state.captainExamPassed = false;
+          state.captainExamBestScore = 0;
+          state.captainExamAttempts = 0;
+          state.captainExamLastResult = null;
         }
         state.version = GAME_CONFIG.version;
         return state;

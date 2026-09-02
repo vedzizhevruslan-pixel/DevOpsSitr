@@ -5,7 +5,9 @@ import { terraformQuestions } from './terraform';
 import { dockerQuestions } from './docker';
 import { kubernetesQuestions } from './kubernetes';
 import { gitlabCicdQuestions } from './gitlab-cicd';
+import { ALL_INTERVIEW_QUESTIONS } from './interview';
 import type { Question, TopicId } from '../../types';
+import { INTERVIEW_SOURCE } from './interview/helpers';
 
 export const ALL_QUESTIONS: Question[] = [
   ...linuxQuestions,
@@ -15,6 +17,7 @@ export const ALL_QUESTIONS: Question[] = [
   ...dockerQuestions,
   ...kubernetesQuestions,
   ...gitlabCicdQuestions,
+  ...ALL_INTERVIEW_QUESTIONS,
 ];
 
 export function getQuestionsByTopic(topicId: TopicId): Question[] {
@@ -28,3 +31,13 @@ export function getQuestionById(id: string): Question | undefined {
 export function getQuestionsBySkillTag(skillTag: string): Question[] {
   return ALL_QUESTIONS.filter((q) => q.skillTag === skillTag);
 }
+
+export function getInterviewQuestions(): Question[] {
+  return ALL_QUESTIONS.filter((q) => q.source === INTERVIEW_SOURCE);
+}
+
+export function isInterviewSourceQuestion(q: Question): boolean {
+  return q.source === INTERVIEW_SOURCE;
+}
+
+export const INTERVIEW_QUESTION_COUNT = ALL_INTERVIEW_QUESTIONS.length;

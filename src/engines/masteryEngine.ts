@@ -24,7 +24,8 @@ export function calculateMastery(
     chapterScore * (1 - quizWeight - practiceWeight);
 
   const errorPenalty = topicMistakes.reduce((sum, m) => {
-    return sum + (m.resolved ? 2 : 5) * m.wrongCount;
+    const weight = m.source === 'devops-interview-guide' ? 1.25 : 1;
+    return sum + (m.resolved ? 2 : 5) * m.wrongCount * weight;
   }, 0);
   base = Math.max(0, base - errorPenalty * GAME_CONFIG.mastery.errorPenalty);
 

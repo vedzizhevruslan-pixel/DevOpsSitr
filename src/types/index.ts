@@ -5,7 +5,8 @@ export type TopicId =
   | 'terraform'
   | 'docker'
   | 'kubernetes'
-  | 'gitlab-cicd';
+  | 'gitlab-cicd'
+  | 'captain-exam';
 
 export type QuestionType =
   | 'single'
@@ -49,6 +50,8 @@ export interface Question {
   explanation: string;
   remember?: string;
   configSnippet?: string;
+  source?: string;
+  interviewWeight?: number;
 }
 
 export interface LessonChapter {
@@ -102,6 +105,8 @@ export interface MistakeRecord {
   firstMistakeAt: string;
   lastMistakeAt: string;
   resolved: boolean;
+  source?: string;
+  firstAttemptCorrect?: boolean;
 }
 
 export interface TopicProgress {
@@ -179,6 +184,11 @@ export interface PlayerState {
   dailyQuest: DailyQuest | null;
   soundEnabled: boolean;
   finalReviewCompleted: boolean;
+  captainExamCompleted: boolean;
+  captainExamPassed: boolean;
+  captainExamBestScore: number;
+  captainExamAttempts: number;
+  captainExamLastResult: CaptainExamResult | null;
   treasureUnlocked: boolean;
   legendaryMode: boolean;
   correctStreak: number;
@@ -204,6 +214,7 @@ export type Screen =
   | 'final-review'
   | 'treasure'
   | 'storm-challenge'
+  | 'captain-exam'
   | 'legendary'
   | 'achievements'
   | 'quests';
@@ -219,5 +230,14 @@ export interface QuizSession {
     firstAttempt: boolean;
     attemptCount: number;
   }>;
-  mode: 'topic' | 'storm' | 'final-review' | 'spaced' | 'legendary';
+  mode: 'topic' | 'storm' | 'final-review' | 'spaced' | 'legendary' | 'captain-exam';
+}
+
+export interface CaptainExamResult {
+  score: number;
+  total: number;
+  percent: number;
+  byTopic: Record<string, { correct: number; total: number }>;
+  weakSkills: string[];
+  date: string;
 }

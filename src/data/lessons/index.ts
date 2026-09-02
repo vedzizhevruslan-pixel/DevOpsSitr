@@ -133,6 +133,7 @@ export const LESSONS: LessonMap = {
     { title: 'Security и Registry', duration: '6 мин', content: 'Trivy scan, Container Registry, masked variables. Protected branches.' },
     { title: 'GitOps и CD', duration: '6 мин', content: 'Helm deploy, ArgoCD GitOps. Manual jobs для production approval.' },
   ]),
+  'captain-exam': [],
 };
 
 export const PRACTICE: PracticeMap = {
@@ -173,6 +174,7 @@ export const PRACTICE: PracticeMap = {
     { id: 'gl-p3', title: 'Runner', description: 'Выполнение jobs', type: 'pipeline', prompt: 'Runner:', options: ['Git server', 'Выполняет jobs', 'Registry'], correctAnswer: 'Выполняет jobs', explanation: 'Runner executes jobs.', skillTag: 'runners' },
     { id: 'gl-p4', title: 'Manual', description: 'Ручной запуск', type: 'pipeline', prompt: 'when: manual:', options: ['Автозапуск', 'Ручной запуск', 'Skip'], correctAnswer: 'Ручной запуск', explanation: 'manual = click Play.', skillTag: 'manual' },
   ],
+  'captain-exam': [],
 };
 
 export function getLessons(topicId: TopicId): LessonChapter[] {

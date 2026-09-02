@@ -106,12 +106,21 @@ export function ErrorBayView() {
         )}
 
         {finalReviewCompleted ? (
-          <div className="text-center p-6 bg-emerald-900/30 border border-emerald-600 rounded-xl">
+          <div className="text-center p-6 bg-emerald-900/30 border border-emerald-600 rounded-xl mb-6">
             <p className="text-emerald-200 font-semibold">Все пробоины устранены!</p>
             <p className="text-emerald-300/70 text-sm mt-2">Путь к сокровищам открыт.</p>
-            <button type="button" onClick={() => setScreen('treasure')} className="mt-4 px-6 py-2 bg-amber-600 rounded-lg text-white">
-              К острову оффера →
-            </button>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center mt-4">
+              <button
+                type="button"
+                onClick={() => setScreen('captain-exam')}
+                className="px-6 py-2 bg-amber-700/80 rounded-lg text-white text-sm"
+              >
+                Собеседование с капитаном →
+              </button>
+              <button type="button" onClick={() => setScreen('treasure')} className="px-6 py-2 bg-amber-600 rounded-lg text-white">
+                К острову оффера →
+              </button>
+            </div>
           </div>
         ) : (
           <div className="text-center">

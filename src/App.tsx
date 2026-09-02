@@ -10,6 +10,7 @@ import { TreasureView } from './components/treasure/TreasureView';
 import { ErrorBayView } from './components/error-bay/ErrorBayView';
 import { AchievementsView } from './components/achievements/AchievementsView';
 import { DebugPanel } from './components/dev/DebugPanel';
+import { CaptainExamView } from './components/captain-exam/CaptainExamView';
 import { QuestsView, LegendaryView } from './components/quests/QuestsView';
 import { useGameStore } from './stores/playerStore';
 import { ACHIEVEMENTS } from './data/achievements';
@@ -51,6 +52,12 @@ function AchievementPopup() {
   );
 }
 
+function CaptainExamScreen() {
+  const quizSession = useGameStore((s) => s.quizSession);
+  if (quizSession?.mode === 'captain-exam') return <QuizView />;
+  return <CaptainExamView />;
+}
+
 function ScreenRouter() {
   const screen = useGameStore((s) => s.currentScreen);
 
@@ -66,6 +73,7 @@ function ScreenRouter() {
     'error-bay': <ErrorBayView />,
     'final-review': <QuizView />,
     'storm-challenge': <QuizView />,
+    'captain-exam': <CaptainExamScreen />,
     achievements: <AchievementsView />,
     quests: <QuestsView />,
     legendary: <LegendaryView />,

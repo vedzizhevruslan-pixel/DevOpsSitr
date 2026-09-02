@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '../../stores/playerStore';
 import { checkAnswer, formatAnswer, getEffectiveQuestionType } from '../../engines/quizEngine';
+import { isInterviewSourceQuestion } from '../../data/questions';
 import { MultipleChoiceInput } from './MultipleChoiceInput';
 import { OrderQuestionInput } from './OrderQuestionInput';
 import { MatchQuestionInput } from './MatchQuestionInput';
@@ -58,7 +59,9 @@ export function QuizView() {
       ? 'Storm Challenge'
       : mode === 'final-review'
         ? 'Финальный обзор ошибок'
-        : 'Контрольный квиз';
+        : mode === 'captain-exam'
+          ? "Captain's Interview"
+          : 'Контрольный квиз';
 
   return (
     <div className="h-full flex flex-col p-6 max-w-3xl mx-auto">
@@ -80,9 +83,16 @@ export function QuizView() {
         {!showFeedback ? (
           <motion.div key={`q-${question.id}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <div className="bg-[#0d1f3c]/80 border border-cyan-800/30 rounded-xl p-6 mb-6 backdrop-blur-sm">
-              <span className="text-xs text-cyan-500 uppercase tracking-wide">
-                {question.difficulty} · {question.skillTag}
-              </span>
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                <span className="text-xs text-cyan-500 uppercase tracking-wide">
+                  {question.difficulty} · {question.skillTag}
+                </span>
+                {isInterviewSourceQuestion(question) && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-900/50 border border-amber-600/40 text-amber-300">
+                    🎯 Вопрос с собеседования
+                  </span>
+                )}
+              </div>
               <h3 className="text-lg font-semibold text-parchment mt-2 mb-4">{question.question}</h3>
               {(question.configSnippet || effectiveType === 'config') && (
                 <pre className="bg-black/60 p-4 rounded-lg text-sm text-green-400 mb-4 overflow-x-auto font-mono border border-green-900/40">

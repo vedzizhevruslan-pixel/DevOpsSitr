@@ -81,6 +81,7 @@ export function getStormMessage(topicId: TopicId): string {
     docker: 'Container Port',
     kubernetes: 'Orchestration Archipelago',
     'gitlab-cicd': 'Automation Shipyard',
+    'captain-exam': 'Open Waters',
   };
   return `Капитан! ${names[topicId] || topicId} стал нашим слабым местом. Шторм относит корабль назад!`;
 }
