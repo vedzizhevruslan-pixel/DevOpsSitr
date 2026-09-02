@@ -6,8 +6,10 @@ import { dockerQuestions } from './docker';
 import { kubernetesQuestions } from './kubernetes';
 import { gitlabCicdQuestions } from './gitlab-cicd';
 import { ALL_INTERVIEW_QUESTIONS } from './interview';
+import { ALL_SUPPLEMENTAL_QUESTIONS } from './supplemental';
 import type { Question, TopicId } from '../../types';
 import { INTERVIEW_SOURCE } from './interview/helpers';
+import { SUPPLEMENTAL_SOURCE } from './supplemental/helpers';
 
 export const ALL_QUESTIONS: Question[] = [
   ...linuxQuestions,
@@ -18,6 +20,7 @@ export const ALL_QUESTIONS: Question[] = [
   ...kubernetesQuestions,
   ...gitlabCicdQuestions,
   ...ALL_INTERVIEW_QUESTIONS,
+  ...ALL_SUPPLEMENTAL_QUESTIONS,
 ];
 
 export function getQuestionsByTopic(topicId: TopicId): Question[] {
@@ -40,4 +43,9 @@ export function isInterviewSourceQuestion(q: Question): boolean {
   return q.source === INTERVIEW_SOURCE;
 }
 
+export function isSupplementalSourceQuestion(q: Question): boolean {
+  return q.source === SUPPLEMENTAL_SOURCE;
+}
+
 export const INTERVIEW_QUESTION_COUNT = ALL_INTERVIEW_QUESTIONS.length;
+export const SUPPLEMENTAL_QUESTION_COUNT = ALL_SUPPLEMENTAL_QUESTIONS.length;
