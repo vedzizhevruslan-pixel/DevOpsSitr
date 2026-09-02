@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MAP_WAYPOINTS } from '../../config/mapConfig';
+import { MAP_LAYOUT, MAP_WAYPOINTS, MAP_Z } from '../../config/mapConfig';
 import { pirateAssets, getAllAssetUrls } from '../../config/assetManifest';
 import { TOPIC_ORDER } from '../../data/topics';
 import { isTopicUnlocked } from '../../engines/masteryEngine';
@@ -18,32 +18,21 @@ import type { TopicId } from '../../types';
 function StormEffects({ level }: { level: ReturnType<typeof getStormVisualLevel> }) {
   if (level === 'calm') return null;
   return (
-    <>
+    <div className="absolute inset-0 pointer-events-none" style={{ zIndex: MAP_Z.weather }}>
       <div
-        className={`absolute inset-0 pointer-events-none ${
-          level === 'hurricane' ? 'bg-black/50' : level === 'storm' ? 'bg-black/35' : 'bg-black/15'
+        className={`absolute inset-0 ${
+          level === 'hurricane' ? 'bg-black/45' : level === 'storm' ? 'bg-black/30' : 'bg-black/12'
         }`}
       />
       {level !== 'clouds' && (
         <AssetImage
           src={pirateAssets.storm}
           alt="Storm"
-          className="absolute top-[8%] left-[40%] w-32 h-32 opacity-70 lightning-flash pointer-events-none"
-          fallback={<span className="absolute top-[8%] left-[40%] text-6xl lightning-flash">⛈️</span>}
+          className="absolute top-[10%] left-[42%] w-28 h-28 opacity-70 lightning-flash"
+          fallback={<span className="absolute top-[10%] left-[42%] text-5xl lightning-flash">⛈️</span>}
         />
       )}
-      {level === 'hurricane' && (
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          {Array.from({ length: 20 }).map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-px h-8 bg-cyan-200/20 animate-pulse"
-              style={{ left: `${(i * 5) % 100}%`, top: `${(i * 7) % 40}%`, animationDelay: `${i * 0.1}s` }}
-            />
-          ))}
-        </div>
-      )}
-    </>
+    </div>
   );
 }
 
@@ -61,12 +50,13 @@ export function VoyageMap() {
   const treasureUnlocked = useGameStore((s) => s.treasureUnlocked);
   const setScreen = useGameStore((s) => s.setScreen);
   const startStormChallenge = useGameStore((s) => s.startStormChallenge);
+  const currentTopicId = useGameStore((s) => s.currentTopicId);
 
   const [mapReady, setMapReady] = useState(false);
 
   useEffect(() => {
     preloadAssets(getAllAssetUrls());
-    const t = setTimeout(() => setMapReady(true), 600);
+    const t = setTimeout(() => setMapReady(true), 500);
     return () => clearTimeout(t);
   }, []);
 
@@ -109,20 +99,27 @@ export function VoyageMap() {
     );
   }
 
+  const { inset } = MAP_LAYOUT;
+
   const stormRetreatLine =
     stormActive && stormTargetTopicId && preStormProgress !== null
       ? (() => {
           const from = getPositionOnRoute(preStormProgress);
           const to = getPositionOnRoute(shipProgress);
           return (
-            <svg className="absolute inset-0 w-full h-full pointer-events-none z-15" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <svg
+              className="absolute inset-0 w-full h-full pointer-events-none"
+              style={{ zIndex: MAP_Z.route }}
+              viewBox="0 0 100 100"
+              preserveAspectRatio="none"
+            >
               <line
                 x1={from.x}
                 y1={from.y}
                 x2={to.x}
                 y2={to.y}
-                stroke="rgba(239,68,68,0.6)"
-                strokeWidth="0.4"
+                stroke="rgba(239,68,68,0.55)"
+                strokeWidth="0.45"
                 strokeDasharray="1 0.8"
               />
             </svg>
@@ -132,78 +129,91 @@ export function VoyageMap() {
 
   return (
     <div className="relative h-full w-full overflow-hidden">
-      <div className="absolute inset-0">
+      {/* Full-bleed ocean */}
+      <div className="absolute inset-0" style={{ zIndex: MAP_Z.ocean }}>
         <AssetImage
           src={pirateAssets.ocean}
           alt="Ocean"
-          className="w-full h-full object-cover wave-bg"
+          className="w-full h-full object-cover scale-105 wave-bg"
           fallback={null}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0a1628]/20 via-transparent to-[#0a1628]/40" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_50%,rgba(0,0,0,0.35)_100%)]" />
-        <div className="absolute inset-0 opacity-20 pointer-events-none bg-[linear-gradient(120deg,transparent_40%,rgba(255,255,255,0.08)_50%,transparent_60%)] animate-[shimmer_12s_ease-in-out_infinite]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0a1628]/25 via-transparent to-[#0a1628]/45" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(0,0,0,0.32)_100%)]" />
+        {/* Soft top fade — hides any baked horizon fragments / edge artifacts */}
+        <div className="absolute inset-x-0 top-0 h-[7%] bg-gradient-to-b from-[#0a1628]/55 to-transparent pointer-events-none" />
       </div>
 
-      <MapDecorations />
+      {/* Playfield — safe area, keeps islands/route/ship clear of mission panel & edges */}
+      <div
+        className="absolute"
+        style={{
+          top: `${inset.top}%`,
+          left: `${inset.left}%`,
+          right: `${inset.right}%`,
+          bottom: `${inset.bottom}%`,
+          zIndex: MAP_Z.atmosphere,
+        }}
+      >
+        <MapDecorations />
+        <RouteLayer shipProgress={shipProgress} />
+        {stormRetreatLine}
 
-      <RouteLayer shipProgress={shipProgress} />
-      {stormRetreatLine}
+        {MAP_WAYPOINTS.map((waypoint) => {
+          if (waypoint.id === 'error-bay') {
+            const locked = !allTopicsDone;
+            return (
+              <IslandNode
+                key={waypoint.id}
+                waypoint={waypoint}
+                status={locked ? 'locked' : finalReviewCompleted ? 'completed' : 'available'}
+                mastery={0}
+                mistakesCount={mistakes.filter((m) => !m.resolved).length}
+                resolvedCount={mistakes.filter((m) => m.resolved).length}
+                onClick={() => !locked && handleIslandClick(undefined, 'error-bay')}
+                isCurrent={false}
+              />
+            );
+          }
+          if (waypoint.id === 'treasure') {
+            const locked = !allTopicsDone || !finalReviewCompleted;
+            return (
+              <IslandNode
+                key={waypoint.id}
+                waypoint={waypoint}
+                status={treasureUnlocked ? 'mastered' : locked ? 'locked' : 'available'}
+                mastery={treasureUnlocked ? 100 : 0}
+                mistakesCount={0}
+                resolvedCount={0}
+                onClick={() => handleIslandClick(undefined, 'treasure')}
+                isCurrent={false}
+              />
+            );
+          }
 
-      {MAP_WAYPOINTS.map((waypoint) => {
-        if (waypoint.id === 'error-bay') {
-          const locked = !allTopicsDone;
-          const topicMistakes = mistakes;
+          const topicId = waypoint.topicId!;
+          const progress = topicProgress[topicId];
+          const unlocked = isTopicUnlocked(topicId, topicProgress, TOPIC_ORDER);
+          const status = getIslandStatusForTopic(topicId, progress, unlocked);
+          const topicMistakes = mistakes.filter((m) => m.topicId === topicId);
+
           return (
             <IslandNode
               key={waypoint.id}
               waypoint={waypoint}
-              status={locked ? 'locked' : finalReviewCompleted ? 'completed' : 'available'}
-              mastery={0}
-              mistakesCount={topicMistakes.filter((m) => !m.resolved).length}
+              status={status}
+              mastery={progress.masteryScore}
+              mistakesCount={topicMistakes.length}
               resolvedCount={topicMistakes.filter((m) => m.resolved).length}
-              onClick={() => !locked && handleIslandClick(undefined, 'error-bay')}
-              isCurrent={false}
+              onClick={() => unlocked && handleIslandClick(topicId)}
+              isCurrent={currentTopicId === topicId}
             />
           );
-        }
-        if (waypoint.id === 'treasure') {
-          const locked = !allTopicsDone || !finalReviewCompleted;
-          return (
-            <IslandNode
-              key={waypoint.id}
-              waypoint={waypoint}
-              status={treasureUnlocked ? 'mastered' : locked ? 'locked' : 'available'}
-              mastery={treasureUnlocked ? 100 : 0}
-              mistakesCount={0}
-              resolvedCount={0}
-              onClick={() => handleIslandClick(undefined, 'treasure')}
-              isCurrent={false}
-            />
-          );
-        }
+        })}
 
-        const topicId = waypoint.topicId!;
-        const progress = topicProgress[topicId];
-        const unlocked = isTopicUnlocked(topicId, topicProgress, TOPIC_ORDER);
-        const status = getIslandStatusForTopic(topicId, progress, unlocked);
-        const topicMistakes = mistakes.filter((m) => m.topicId === topicId);
+        <ShipSprite progress={shipProgress} animating={shipAnimating} />
+        <StormEffects level={stormLevel} />
+      </div>
 
-        return (
-          <IslandNode
-            key={waypoint.id}
-            waypoint={waypoint}
-            status={status}
-            mastery={progress.masteryScore}
-            mistakesCount={topicMistakes.length}
-            resolvedCount={topicMistakes.filter((m) => m.resolved).length}
-            onClick={() => unlocked && handleIslandClick(topicId)}
-            isCurrent={useGameStore.getState().currentTopicId === topicId}
-          />
-        );
-      })}
-
-      <ShipSprite progress={shipProgress} animating={shipAnimating} />
-      <StormEffects level={stormLevel} />
       <CurrentMissionPanel />
 
       <AnimatePresence>
@@ -212,7 +222,8 @@ export function VoyageMap() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 z-40 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+            className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+            style={{ zIndex: MAP_Z.modal }}
           >
             <motion.div
               initial={{ scale: 0.8, y: 30 }}

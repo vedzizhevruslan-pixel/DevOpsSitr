@@ -3,12 +3,16 @@ import { useGameStore } from '../../stores/playerStore';
 import { TOPIC_ORDER } from '../../data/topics';
 import { waypointToProgress } from '../../config/mapConfig';
 import type { TopicId } from '../../types';
+import { useMapDebug } from '../map/mapDebugStore';
+import { getLessons, getPractice } from '../../data/lessons';
 
 export function DebugPanel() {
   const [open, setOpen] = useState(false);
   if (!import.meta.env.DEV) return null;
 
   const state = useGameStore();
+  const showAssetBounds = useMapDebug((s) => s.showAssetBounds);
+  const toggleAssetBounds = useMapDebug((s) => s.toggleAssetBounds);
 
   const actions = {
     setXp: (xp: number) => useGameStore.setState({ xp }),
@@ -35,8 +39,8 @@ export function DebugPanel() {
         bestQuizScore: 85,
         status: 'completed' as const,
         quizAttempts: [{ id: 'debug', date: new Date().toISOString(), score: 8, total: 10, questionIds: [] }],
-        chaptersCompleted: getAllChapterIds(topicId),
-        practiceCompleted: getAllPracticeIds(topicId),
+        chaptersCompleted: getLessons(topicId).map((c) => c.id),
+        practiceCompleted: getPractice(topicId).map((p) => p.id),
       };
       useGameStore.setState({ topicProgress: { ...state.topicProgress, [topicId]: p } });
     },
@@ -72,45 +76,55 @@ export function DebugPanel() {
 
   return (
     <>
+      {/* Closed state: only a compact button — no panel remnant */}
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="fixed bottom-4 left-4 z-50 px-2 py-1 bg-purple-900/80 border border-purple-500 rounded text-xs text-purple-200"
+        className="fixed bottom-4 left-4 z-[100] px-2 py-1 bg-purple-900/80 border border-purple-500 rounded text-xs text-purple-200 shadow-lg"
       >
-        DEBUG
+        {open ? '✕ DEBUG' : 'DEBUG'}
       </button>
+
       {open && (
-        <div className="fixed bottom-12 left-4 z-50 w-64 max-h-96 overflow-y-auto bg-black/90 border border-purple-500 rounded-lg p-3 text-xs space-y-2">
+        <div className="fixed bottom-12 left-4 z-[100] w-64 max-h-[70vh] overflow-y-auto bg-black/95 border border-purple-500 rounded-lg p-3 text-xs space-y-2 shadow-2xl">
           <div className="font-bold text-purple-300">Dev Panel</div>
-          <button type="button" className="block w-full text-left hover:text-amber-300" onClick={() => actions.setXp(4000)}>Set XP 4000</button>
-          <button type="button" className="block w-full text-left hover:text-amber-300" onClick={() => actions.setMastery('networks', 45)}>Networks Mastery 45%</button>
-          <button type="button" className="block w-full text-left hover:text-amber-300" onClick={() => actions.triggerStorm()}>Trigger Storm</button>
-          <button type="button" className="block w-full text-left hover:text-amber-300" onClick={() => actions.jumpToIsland(4)}>Jump to Docker</button>
-          <button type="button" className="block w-full text-left hover:text-amber-300" onClick={() => actions.completeTopic('linux')}>Complete Linux</button>
-          <button type="button" className="block w-full text-left hover:text-amber-300" onClick={actions.addFakeMistake}>Add Fake Mistake</button>
-          <button type="button" className="block w-full text-left hover:text-amber-300" onClick={actions.openErrorBay}>Open Error Bay</button>
-          <button type="button" className="block w-full text-left hover:text-amber-300" onClick={actions.unlockPrereqs}>Unlock Treasure prereqs</button>
-          <button type="button" className="block w-full text-left text-red-400" onClick={actions.reset}>Reset</button>
+          <label className="flex items-center gap-2 text-purple-100 cursor-pointer py-1">
+            <input type="checkbox" checked={showAssetBounds} onChange={toggleAssetBounds} />
+            Show Asset Bounds
+          </label>
+          <button type="button" className="block w-full text-left hover:text-amber-300" onClick={() => actions.setXp(4000)}>
+            Set XP 4000
+          </button>
+          <button
+            type="button"
+            className="block w-full text-left hover:text-amber-300"
+            onClick={() => actions.setMastery('networks', 45)}
+          >
+            Networks Mastery 45%
+          </button>
+          <button type="button" className="block w-full text-left hover:text-amber-300" onClick={() => actions.triggerStorm()}>
+            Trigger Storm
+          </button>
+          <button type="button" className="block w-full text-left hover:text-amber-300" onClick={() => actions.jumpToIsland(4)}>
+            Jump to Docker
+          </button>
+          <button type="button" className="block w-full text-left hover:text-amber-300" onClick={() => actions.completeTopic('linux')}>
+            Complete Linux
+          </button>
+          <button type="button" className="block w-full text-left hover:text-amber-300" onClick={actions.addFakeMistake}>
+            Add Fake Mistake
+          </button>
+          <button type="button" className="block w-full text-left hover:text-amber-300" onClick={actions.openErrorBay}>
+            Open Error Bay
+          </button>
+          <button type="button" className="block w-full text-left hover:text-amber-300" onClick={actions.unlockPrereqs}>
+            Unlock Treasure prereqs
+          </button>
+          <button type="button" className="block w-full text-left text-red-400" onClick={actions.reset}>
+            Reset
+          </button>
         </div>
       )}
     </>
   );
-}
-
-function getAllChapterIds(topicId: TopicId): string[] {
-  return Array.from({ length: 5 }, (_, i) => `${topicId}-ch${i + 1}`);
-}
-
-function getAllPracticeIds(topicId: TopicId): string[] {
-  if (topicId === 'captain-exam') return [];
-  const prefixes: Record<Exclude<TopicId, 'captain-exam'>, string> = {
-    linux: 'linux-p',
-    networks: 'net-p',
-    ansible: 'ans-p',
-    terraform: 'tf-p',
-    docker: 'dock-p',
-    kubernetes: 'k8s-p',
-    'gitlab-cicd': 'gl-p',
-  };
-  return [1, 2, 3, 4].map((n) => `${prefixes[topicId]}${n}`);
 }

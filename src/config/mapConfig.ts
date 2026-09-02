@@ -1,28 +1,160 @@
 import type { TopicId } from '../types';
 import { pirateAssets } from './assetManifest';
 
+/**
+ * Map layout constants (percent of the PLAYFIELD, not full viewport).
+ * Playfield excludes right mission panel and edge margins.
+ */
+export const MAP_LAYOUT = {
+  /** Right mission panel reserved width in rem (~w-64 + gaps) */
+  missionPanelRem: 17,
+  /** Playfield insets as % of full map container */
+  inset: {
+    top: 8,
+    left: 4,
+    right: 28,
+    bottom: 9,
+  },
+} as const;
+
 export interface MapWaypoint {
   id: string;
   topicId?: TopicId;
   label: string;
   labelRu: string;
+  /** Center X within playfield 0–100 */
   x: number;
+  /** Center Y within playfield 0–100 */
   y: number;
+  /** Relative visual scale */
   scale: number;
+  /** Base pixel width before scale (approx) */
+  baseSize: number;
+  labelOffsetX: number;
+  labelOffsetY: number;
   assetKey: keyof typeof pirateAssets.islands;
 }
 
-/** Winding sea route — coordinates in % of map viewport */
+/**
+ * Winding maritime route through safe playfield.
+ * Treasure largest → K8s/Docker large → mid islands medium.
+ */
 export const MAP_WAYPOINTS: MapWaypoint[] = [
-  { id: 'linux', topicId: 'linux', label: 'Linux', labelRu: 'Linux', x: 10, y: 68, scale: 1.05, assetKey: 'linux' },
-  { id: 'networks', topicId: 'networks', label: 'Networks', labelRu: 'Сети', x: 22, y: 42, scale: 1.0, assetKey: 'networks' },
-  { id: 'ansible', topicId: 'ansible', label: 'Ansible', labelRu: 'Ansible', x: 36, y: 62, scale: 1.0, assetKey: 'ansible' },
-  { id: 'terraform', topicId: 'terraform', label: 'Terraform', labelRu: 'Terraform', x: 46, y: 34, scale: 1.0, assetKey: 'terraform' },
-  { id: 'docker', topicId: 'docker', label: 'Docker', labelRu: 'Docker', x: 56, y: 54, scale: 1.2, assetKey: 'docker' },
-  { id: 'kubernetes', topicId: 'kubernetes', label: 'Kubernetes', labelRu: 'Kubernetes', x: 68, y: 38, scale: 1.2, assetKey: 'kubernetes' },
-  { id: 'gitlab-cicd', topicId: 'gitlab-cicd', label: 'GitLab CI/CD', labelRu: 'GitLab CI/CD', x: 78, y: 56, scale: 1.15, assetKey: 'gitlab' },
-  { id: 'error-bay', label: 'Error Bay', labelRu: 'Бухта ошибок', x: 86, y: 44, scale: 1.25, assetKey: 'errorBay' },
-  { id: 'treasure', label: 'Offer Island', labelRu: 'Остров оффера', x: 92, y: 26, scale: 1.4, assetKey: 'treasure' },
+  {
+    id: 'linux',
+    topicId: 'linux',
+    label: 'Linux',
+    labelRu: 'Linux',
+    x: 14,
+    y: 70,
+    scale: 1.08,
+    baseSize: 132,
+    labelOffsetX: 0,
+    labelOffsetY: 78,
+    assetKey: 'linux',
+  },
+  {
+    id: 'networks',
+    topicId: 'networks',
+    label: 'Networks',
+    labelRu: 'Сети',
+    x: 26,
+    y: 38,
+    scale: 1.05,
+    baseSize: 128,
+    labelOffsetX: 0,
+    labelOffsetY: 76,
+    assetKey: 'networks',
+  },
+  {
+    id: 'ansible',
+    topicId: 'ansible',
+    label: 'Ansible',
+    labelRu: 'Ansible',
+    x: 40,
+    y: 70,
+    scale: 1.05,
+    baseSize: 128,
+    labelOffsetX: 0,
+    labelOffsetY: 76,
+    assetKey: 'ansible',
+  },
+  {
+    id: 'terraform',
+    topicId: 'terraform',
+    label: 'Terraform',
+    labelRu: 'Terraform',
+    x: 48,
+    y: 32,
+    scale: 1.05,
+    baseSize: 128,
+    labelOffsetX: 0,
+    labelOffsetY: 76,
+    assetKey: 'terraform',
+  },
+  {
+    id: 'docker',
+    topicId: 'docker',
+    label: 'Docker',
+    labelRu: 'Docker',
+    x: 58,
+    y: 58,
+    scale: 1.22,
+    baseSize: 148,
+    labelOffsetX: 0,
+    labelOffsetY: 86,
+    assetKey: 'docker',
+  },
+  {
+    id: 'kubernetes',
+    topicId: 'kubernetes',
+    label: 'Kubernetes',
+    labelRu: 'Kubernetes',
+    x: 70,
+    y: 36,
+    scale: 1.22,
+    baseSize: 148,
+    labelOffsetX: 0,
+    labelOffsetY: 86,
+    assetKey: 'kubernetes',
+  },
+  {
+    id: 'gitlab-cicd',
+    topicId: 'gitlab-cicd',
+    label: 'GitLab CI/CD',
+    labelRu: 'GitLab CI/CD',
+    x: 78,
+    y: 68,
+    scale: 1.12,
+    baseSize: 136,
+    labelOffsetX: 0,
+    labelOffsetY: 80,
+    assetKey: 'gitlab',
+  },
+  {
+    id: 'error-bay',
+    label: 'Error Bay',
+    labelRu: 'Бухта ошибок',
+    x: 84,
+    y: 52,
+    scale: 1.18,
+    baseSize: 140,
+    labelOffsetX: 0,
+    labelOffsetY: 82,
+    assetKey: 'errorBay',
+  },
+  {
+    id: 'treasure',
+    label: 'Offer Island',
+    labelRu: 'Остров оффера',
+    x: 88,
+    y: 26,
+    scale: 1.28,
+    baseSize: 150,
+    labelOffsetX: 0,
+    labelOffsetY: 92,
+    assetKey: 'treasure',
+  },
 ];
 
 export const TOPIC_WAYPOINT_COUNT = 7;
@@ -57,3 +189,19 @@ export function buildRoutePath(waypoints: MapWaypoint[]): string {
 }
 
 export const ROUTE_PATH_D = buildRoutePath(MAP_WAYPOINTS);
+
+/** Z-index layers for the map */
+export const MAP_Z = {
+  ocean: 0,
+  atmosphere: 5,
+  route: 10,
+  decorations: 20,
+  islands: 30,
+  islandLabels: 40,
+  ship: 50,
+  weather: 60,
+  hud: 70,
+  sidebar: 80,
+  modal: 90,
+  debug: 100,
+} as const;

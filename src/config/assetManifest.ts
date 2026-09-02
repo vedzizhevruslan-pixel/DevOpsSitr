@@ -78,23 +78,29 @@ export interface MapDecoration {
   flip?: boolean;
 }
 
-/** Atmospheric props — coordinates in % of map viewport */
+/** Atmospheric props — coordinates in % of PLAYFIELD (safe area) */
 export const MAP_DECORATIONS: MapDecoration[] = [
-  { id: 'cloud-tl', assetKey: 'cloud01', x: 8, y: 6, scale: 1.1, opacity: 0.85 },
-  { id: 'cloud-tr', assetKey: 'cloud02', x: 72, y: 4, scale: 0.9, opacity: 0.75 },
-  { id: 'cloud-mid', assetKey: 'cloud01', x: 45, y: 8, scale: 0.7, opacity: 0.6 },
-  { id: 'buoy-1', assetKey: 'buoy', x: 18, y: 78, scale: 0.55, opacity: 0.9 },
-  { id: 'rock-1', assetKey: 'rock01', x: 6, y: 48, scale: 0.35, opacity: 0.8 },
-  { id: 'rock-2', assetKey: 'rock02', x: 32, y: 72, scale: 0.3, opacity: 0.75 },
-  { id: 'barrel-1', assetKey: 'barrel', x: 42, y: 68, scale: 0.4, opacity: 0.85 },
-  { id: 'bottle-1', assetKey: 'bottle', x: 55, y: 72, scale: 0.35, opacity: 0.8 },
-  { id: 'compass-1', assetKey: 'compass', x: 92, y: 62, scale: 0.3, opacity: 0.7 },
-  { id: 'rowboat-1', assetKey: 'rowboat', x: 28, y: 82, scale: 0.45, opacity: 0.85 },
-  { id: 'wreck-1', assetKey: 'wreck', x: 85, y: 58, scale: 0.4, opacity: 0.75 },
-  { id: 'seagull-1', assetKey: 'seagull', x: 50, y: 18, scale: 0.35, opacity: 0.9 },
-  { id: 'seagull-2', assetKey: 'seagull', x: 62, y: 22, scale: 0.28, opacity: 0.8, flip: true },
-  { id: 'shark-1', assetKey: 'sharkFin', x: 75, y: 68, scale: 0.35, opacity: 0.85 },
-  { id: 'whale-1', assetKey: 'whaleTail', x: 5, y: 85, scale: 0.4, opacity: 0.8 },
+  // Soft clouds — kept inside safe area (not flush to top)
+  { id: 'cloud-tl', assetKey: 'cloud01', x: 16, y: 16, scale: 1.05, opacity: 0.55 },
+  { id: 'cloud-tr', assetKey: 'cloud02', x: 58, y: 14, scale: 0.9, opacity: 0.45 },
+  { id: 'cloud-mid', assetKey: 'cloud01', x: 36, y: 20, scale: 0.75, opacity: 0.35 },
+  // Near route / islands
+  { id: 'buoy-1', assetKey: 'buoy', x: 17, y: 82, scale: 0.4, opacity: 0.9 },
+  { id: 'rock-1', assetKey: 'rock01', x: 9, y: 50, scale: 0.36, opacity: 0.8 },
+  { id: 'rock-2', assetKey: 'rock02', x: 33, y: 84, scale: 0.3, opacity: 0.75 },
+  { id: 'barrel-1', assetKey: 'barrel', x: 53, y: 76, scale: 0.36, opacity: 0.85 },
+  { id: 'crate-1', assetKey: 'crate', x: 61, y: 80, scale: 0.34, opacity: 0.8 },
+  { id: 'bottle-1', assetKey: 'bottle', x: 43, y: 46, scale: 0.3, opacity: 0.75 },
+  { id: 'rowboat-1', assetKey: 'rowboat', x: 24, y: 88, scale: 0.4, opacity: 0.85 },
+  // Near Error Bay
+  { id: 'wreck-1', assetKey: 'wreck', x: 86, y: 56, scale: 0.42, opacity: 0.8 },
+  // Open water
+  { id: 'shark-1', assetKey: 'sharkFin', x: 64, y: 86, scale: 0.34, opacity: 0.85 },
+  { id: 'whale-1', assetKey: 'whaleTail', x: 12, y: 24, scale: 0.38, opacity: 0.7 },
+  // Atmosphere near islands
+  { id: 'seagull-1', assetKey: 'seagull', x: 50, y: 22, scale: 0.3, opacity: 0.85 },
+  { id: 'seagull-2', assetKey: 'seagull', x: 72, y: 24, scale: 0.24, opacity: 0.75, flip: true },
+  { id: 'compass-1', assetKey: 'compass', x: 88, y: 82, scale: 0.26, opacity: 0.6 },
 ];
 
 /** All asset URLs for preloading */
