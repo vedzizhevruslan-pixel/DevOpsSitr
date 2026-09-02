@@ -1,4 +1,13 @@
 import type { LessonChapter, PracticeExercise, TopicId } from '../../types';
+import { linuxPractice } from './linuxPractice';
+import {
+  ansiblePractice,
+  dockerPractice,
+  gitlabPractice,
+  kubernetesPractice,
+  networksPractice,
+  terraformPractice,
+} from './islandPractice';
 
 export const linuxLessons: LessonChapter[] = [
   {
@@ -51,34 +60,6 @@ export const linuxLessons: LessonChapter[] = [
     commands: ['free -h', 'df -h', 'iostat -xz 1', 'ss -tlnp', 'uptime'],
     tips: ['wa в top — iowait, проблемы с диском', 'Available важнее Free'],
     mistakes: ['Смотреть только CPU, игнорируя iowait'],
-  },
-];
-
-export const linuxPractice: PracticeExercise[] = [
-  {
-    id: 'linux-p1', title: 'Просмотр файлов', description: 'Выбери команду для списка файлов',
-    type: 'terminal', prompt: '$ ___', options: ['ls', 'cd', 'pwd', 'cat'],
-    correctAnswer: 'ls', explanation: 'ls показывает содержимое директории.', skillTag: 'navigation',
-  },
-  {
-    id: 'linux-p2', title: 'Текущая директория', description: 'Где я нахожусь?',
-    type: 'terminal', prompt: '$ ___', options: ['pwd', 'ls', 'whoami', 'where'],
-    correctAnswer: 'pwd', explanation: 'pwd (print working directory) показывает текущий путь.', skillTag: 'navigation',
-  },
-  {
-    id: 'linux-p3', title: 'Поиск текста', description: 'Найти строку "error" в логе',
-    type: 'terminal', prompt: '$ ___ error /var/log/app.log', options: ['grep', 'find', 'locate', 'which'],
-    correctAnswer: 'grep', explanation: 'grep ищет паттерн в файле.', skillTag: 'search',
-  },
-  {
-    id: 'linux-p4', title: 'Права доступа', description: 'Сделать скрипт исполняемым',
-    type: 'terminal', prompt: '$ ___ +x deploy.sh', options: ['chmod', 'chown', 'chgrp', 'umask'],
-    correctAnswer: 'chmod', explanation: 'chmod +x добавляет право на выполнение.', skillTag: 'permissions',
-  },
-  {
-    id: 'linux-p5', title: 'Остановка процесса', description: 'Завершить процесс по PID 1234',
-    type: 'terminal', prompt: '$ ___ 1234', options: ['kill', 'stop', 'end', 'halt'],
-    correctAnswer: 'kill', explanation: 'kill отправляет сигнал процессу.', skillTag: 'processes',
   },
 ];
 
@@ -138,42 +119,12 @@ export const LESSONS: LessonMap = {
 
 export const PRACTICE: PracticeMap = {
   linux: linuxPractice,
-  networks: [
-    { id: 'net-p1', title: 'Подсеть', description: 'Определи gateway', type: 'network', prompt: 'IP: 10.0.1.50/24. Gateway?', options: ['10.0.1.0', '10.0.1.1', '10.0.1.255'], correctAnswer: '10.0.1.1', explanation: 'Обычно .1 — gateway.', skillTag: 'subnetting' },
-    { id: 'net-p2', title: 'Протокол', description: 'HTTP использует', type: 'network', prompt: 'HTTP работает поверх:', options: ['UDP', 'TCP', 'ICMP'], correctAnswer: 'TCP', explanation: 'HTTP — TCP протокол.', skillTag: 'protocols' },
-    { id: 'net-p3', title: 'DNS', description: 'Тип записи', type: 'network', prompt: 'CNAME создаёт:', options: ['IP адрес', 'Алиас на hostname', 'MX запись'], correctAnswer: 'Алиас на hostname', explanation: 'CNAME — canonical name alias.', skillTag: 'dns' },
-    { id: 'net-p4', title: 'Порт', description: 'HTTPS порт', type: 'network', prompt: 'HTTPS порт:', options: ['80', '443', '22'], correctAnswer: '443', explanation: 'HTTPS = 443.', skillTag: 'ports' },
-  ],
-  ansible: [
-    { id: 'ans-p1', title: 'Inventory', description: 'Что такое inventory', type: 'yaml', prompt: 'Inventory — это:', options: ['Список хостов', 'Playbook', 'Module'], correctAnswer: 'Список хостов', explanation: 'Inventory = managed hosts.', skillTag: 'inventory' },
-    { id: 'ans-p2', title: 'Module', description: 'Установка пакета', type: 'yaml', prompt: 'Module для apt на Ubuntu:', options: ['yum', 'apt', 'dnf'], correctAnswer: 'apt', explanation: 'apt для Debian/Ubuntu.', skillTag: 'modules' },
-    { id: 'ans-p3', title: 'Handler', description: 'Когда запускается', type: 'yaml', prompt: 'Handler запускается при:', options: ['notify после изменения', 'Всегда', 'Никогда'], correctAnswer: 'notify после изменения', explanation: 'Handlers — по событию.', skillTag: 'handlers' },
-    { id: 'ans-p4', title: 'YAML', description: 'Формат playbook', type: 'yaml', prompt: 'Playbook формат:', options: ['JSON', 'YAML', 'XML'], correctAnswer: 'YAML', explanation: 'Ansible = YAML.', skillTag: 'playbook' },
-  ],
-  terraform: [
-    { id: 'tf-p1', title: 'Workflow', description: 'Порядок команд', type: 'hcl', prompt: 'Первый шаг:', options: ['apply', 'init', 'destroy'], correctAnswer: 'init', explanation: 'init загружает providers.', skillTag: 'workflow' },
-    { id: 'tf-p2', title: 'Plan', description: 'Что показывает plan', type: 'hcl', prompt: 'terraform plan:', options: ['Применяет изменения', 'Показывает план изменений', 'Удаляет state'], correctAnswer: 'Показывает план изменений', explanation: 'plan = dry-run preview.', skillTag: 'plan' },
-    { id: 'tf-p3', title: 'State', description: 'Назначение state', type: 'hcl', prompt: 'State хранит:', options: ['Код HCL', 'Маппинг ресурсов к ID', 'Логи'], correctAnswer: 'Маппинг ресурсов к ID', explanation: 'State = реальные ID.', skillTag: 'state' },
-    { id: 'tf-p4', title: 'Resource', description: 'Создание ресурса', type: 'hcl', prompt: 'resource блок:', options: ['Создаёт инфраструктуру', 'Только переменную', 'Output'], correctAnswer: 'Создаёт инфраструктуру', explanation: 'resource = create.', skillTag: 'resources' },
-  ],
-  docker: [
-    { id: 'dock-p1', title: 'Dockerfile порядок', description: 'Расположи команды', type: 'dockerfile', prompt: 'Первая команда Dockerfile:', options: ['CMD', 'FROM', 'RUN'], correctAnswer: 'FROM', explanation: 'FROM — базовый image.', skillTag: 'dockerfile' },
-    { id: 'dock-p2', title: 'Run vs Start', description: 'Создать контейнер', type: 'quiz', prompt: 'Новый контейнер:', options: ['docker start', 'docker run', 'docker exec'], correctAnswer: 'docker run', explanation: 'run = create + start.', skillTag: 'commands' },
-    { id: 'dock-p3', title: 'Volume', description: 'Персистентность', type: 'quiz', prompt: 'Данные вне lifecycle:', options: ['Volume', 'EXPOSE', 'CMD'], correctAnswer: 'Volume', explanation: 'Volumes persist data.', skillTag: 'volumes' },
-    { id: 'dock-p4', title: 'Logs', description: 'Просмотр логов', type: 'quiz', prompt: 'Логи контейнера:', options: ['docker ps', 'docker logs', 'docker top'], correctAnswer: 'docker logs', explanation: 'docker logs container.', skillTag: 'commands' },
-  ],
-  kubernetes: [
-    { id: 'k8s-p1', title: 'Иерархия', description: 'Порядок объектов', type: 'k8s', prompt: 'Минимальная единица:', options: ['Deployment', 'Pod', 'Service'], correctAnswer: 'Pod', explanation: 'Pod = smallest unit.', skillTag: 'pods' },
-    { id: 'k8s-p2', title: 'Service', description: 'Внутренний доступ', type: 'k8s', prompt: 'Internal only service:', options: ['NodePort', 'ClusterIP', 'LoadBalancer'], correctAnswer: 'ClusterIP', explanation: 'ClusterIP = internal.', skillTag: 'services' },
-    { id: 'k8s-p3', title: 'Probe', description: 'Перезапуск', type: 'k8s', prompt: 'Restart при failure:', options: ['Readiness', 'Liveness', 'Startup'], correctAnswer: 'Liveness', explanation: 'Liveness → restart.', skillTag: 'probes' },
-    { id: 'k8s-p4', title: 'Scale', description: 'Масштабирование', type: 'k8s', prompt: '2 → 5 replicas:', options: ['kubectl scale', 'kubectl delete', 'kubectl logs'], correctAnswer: 'kubectl scale', explanation: 'kubectl scale deployment.', skillTag: 'scaling' },
-  ],
-  'gitlab-cicd': [
-    { id: 'gl-p1', title: 'Stages', description: 'Параллельность', type: 'pipeline', prompt: 'Jobs в одном stage:', options: ['Последовательно', 'Параллельно', 'Random'], correctAnswer: 'Параллельно', explanation: 'Same stage = parallel.', skillTag: 'stages' },
-    { id: 'gl-p2', title: 'Artifacts', description: 'Передача файлов', type: 'pipeline', prompt: 'Artifacts для:', options: ['Кэша deps', 'Передачи между jobs', 'Secrets'], correctAnswer: 'Передачи между jobs', explanation: 'Artifacts = file transfer.', skillTag: 'artifacts' },
-    { id: 'gl-p3', title: 'Runner', description: 'Выполнение jobs', type: 'pipeline', prompt: 'Runner:', options: ['Git server', 'Выполняет jobs', 'Registry'], correctAnswer: 'Выполняет jobs', explanation: 'Runner executes jobs.', skillTag: 'runners' },
-    { id: 'gl-p4', title: 'Manual', description: 'Ручной запуск', type: 'pipeline', prompt: 'when: manual:', options: ['Автозапуск', 'Ручной запуск', 'Skip'], correctAnswer: 'Ручной запуск', explanation: 'manual = click Play.', skillTag: 'manual' },
-  ],
+  networks: networksPractice,
+  ansible: ansiblePractice,
+  terraform: terraformPractice,
+  docker: dockerPractice,
+  kubernetes: kubernetesPractice,
+  'gitlab-cicd': gitlabPractice,
   'captain-exam': [],
 };
 

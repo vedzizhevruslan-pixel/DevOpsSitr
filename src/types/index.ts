@@ -74,6 +74,24 @@ export interface PracticeExercise {
   correctAnswer: string | string[];
   explanation: string;
   skillTag: string;
+  /** Short story / situation shown above the interaction */
+  scenario?: string;
+  /** What the player must achieve */
+  objective?: string;
+  /** All accepted correct answers (normalized). Falls back to correctAnswer */
+  acceptedAnswers?: string[];
+  /** Progressive hints (reveal one by one) */
+  hints?: string[];
+  /** Shown after success; falls back to explanation */
+  successExplanation?: string;
+  /** Generic wrong-answer coaching */
+  failureFeedback?: string;
+  /** Optional feedback keyed by wrong command / option text */
+  wrongAnswerHints?: Record<string, string>;
+  /** Free terminal vs multiple choice. Default inferred from type/options */
+  interaction?: 'terminal' | 'choice' | 'order';
+  /** Fake terminal success output lines */
+  successOutput?: string[];
 }
 
 export interface Topic {

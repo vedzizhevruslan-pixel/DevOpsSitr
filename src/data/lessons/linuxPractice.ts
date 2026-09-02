@@ -1,0 +1,171 @@
+import type { PracticeExercise } from '../../types';
+
+export const linuxPractice: PracticeExercise[] = [
+  {
+    id: 'linux-p1',
+    title: 'Где мы находимся?',
+    description: 'Узнать текущую директорию',
+    type: 'terminal',
+    interaction: 'terminal',
+    skillTag: 'navigation',
+    prompt: 'Введи Linux-команду, которая покажет текущую рабочую директорию.',
+    scenario:
+      'Ты подключился к незнакомому Linux-серверу и не знаешь, в какой директории сейчас находишься.',
+    objective: 'Введи команду, которая покажет текущую рабочую директорию.',
+    acceptedAnswers: ['pwd'],
+    correctAnswer: 'pwd',
+    hints: [
+      'Нужна команда, которая показывает текущий путь (working directory).',
+      'Название команды состоит из трёх букв.',
+      'Команда начинается на «p» и заканчивается на «d».',
+    ],
+    explanation: 'pwd = Print Working Directory.',
+    successExplanation:
+      '`pwd` означает Print Working Directory — показывает абсолютный путь до текущей директории.',
+    successOutput: ['/home/pirate'],
+    failureFeedback:
+      '✗ Эта команда не решает задачу.\n\nНам нужно узнать, в какой директории мы уже находимся — не переходить и не смотреть список файлов.',
+    wrongAnswerHints: {
+      ls: '✗ `ls` показывает содержимое директории, но не путь к ней.\n\nНужно узнать, ГДЕ мы находимся.',
+      cd: '✗ `cd` меняет директорию.\n\nСейчас нужно узнать текущую, а не переходить.',
+      whoami: '✗ `whoami` показывает имя пользователя, не путь.',
+      dir: '✗ В Linux обычно используют другие команды. Подумай про print working directory.',
+    },
+  },
+  {
+    id: 'linux-p2',
+    title: 'Что лежит в папке?',
+    description: 'Посмотреть файлы в текущей директории',
+    type: 'terminal',
+    interaction: 'terminal',
+    skillTag: 'navigation',
+    prompt: 'Введи команду для просмотра файлов и папок.',
+    scenario:
+      'Ты находишься в директории проекта. Нужно посмотреть, какие файлы и папки внутри неё.',
+    objective: 'Введи команду, которая покажет содержимое текущей директории.',
+    acceptedAnswers: ['ls', 'ls -l', 'ls -la', 'ls -al', 'ls -a'],
+    correctAnswer: 'ls',
+    hints: [
+      'Нужна команда «list» — показать список файлов.',
+      'Команда состоит из двух букв.',
+      'Можно просто `ls` или с флагами вроде `-l` / `-la`.',
+    ],
+    explanation: 'ls показывает содержимое директории.',
+    successExplanation:
+      '`ls` выводит список файлов и каталогов. `-l` — подробный вид, `-a` — включая скрытые.',
+    successOutput: ['README.md  deploy.sh  logs/  src/'],
+    failureFeedback:
+      '✗ Эта команда не показывает список файлов в текущей директории.',
+    wrongAnswerHints: {
+      pwd: '✗ `pwd` показывает путь, но не список файлов внутри.',
+      cd: '✗ `cd` переходит в другую директорию, а не показывает содержимое.',
+      cat: '✗ `cat` читает содержимое файла, а не список каталога.',
+      find: '✗ `find` ищет файлы по дереву — сейчас достаточно простого списка текущей папки.',
+    },
+  },
+  {
+    id: 'linux-p3',
+    title: 'Перейти в /var/log',
+    description: 'Сменить директорию на /var/log',
+    type: 'terminal',
+    interaction: 'terminal',
+    skillTag: 'navigation',
+    prompt: 'Перейди в директорию /var/log.',
+    scenario: 'На сервере есть директория `/var/log` с системными логами. Нужно перейти в неё.',
+    objective: 'Введи команду перехода в `/var/log`.',
+    acceptedAnswers: ['cd /var/log', 'cd /var/log/'],
+    correctAnswer: 'cd /var/log',
+    hints: [
+      'Нужна команда смены директории (change directory).',
+      'Команда начинается с `cd` и принимает путь.',
+      'Полный путь: `/var/log`.',
+    ],
+    explanation: 'cd меняет текущую директорию.',
+    successExplanation:
+      '`cd` (change directory) меняет текущую рабочую директорию. После перехода приглашение покажет новый путь.',
+    successOutput: ['Перешли в /var/log'],
+    failureFeedback: '✗ Нужно именно сменить текущую директорию на `/var/log`.',
+    wrongAnswerHints: {
+      'ls /var/log': '✗ `ls /var/log` покажет содержимое, но ты останешься в старой директории.',
+      pwd: '✗ `pwd` только показывает путь.',
+      'cd var/log': '✗ Без ведущего `/` путь относительный. Нужен абсолютный: `/var/log`.',
+      'cd /var': '✗ Это `/var`, а нужна именно `/var/log`.',
+    },
+  },
+  {
+    id: 'linux-p4',
+    title: 'Найти nginx.log',
+    description: 'Найти файл nginx.log в /var/log',
+    type: 'terminal',
+    interaction: 'terminal',
+    skillTag: 'search',
+    prompt: 'Найди файл nginx.log внутри /var/log.',
+    scenario:
+      'На сервере много логов. Нужно найти файл `nginx.log` внутри `/var/log`.',
+    objective: 'Введи команду поиска файла по имени в указанной директории.',
+    acceptedAnswers: [
+      'find /var/log -name "nginx.log"',
+      'find /var/log -name nginx.log',
+      'find /var/log -name \'nginx.log\'',
+      'find /var/log -type f -name nginx.log',
+      'find /var/log -type f -name "nginx.log"',
+    ],
+    correctAnswer: 'find /var/log -name nginx.log',
+    hints: [
+      'Нужна команда поиска файлов по дереву каталогов.',
+      'Базовый вид: `find <путь> -name <имя>`.',
+      'Путь `/var/log`, имя файла `nginx.log`.',
+    ],
+    explanation: 'find ищет файлы по имени и атрибутам.',
+    successExplanation:
+      '`find` обходит дерево каталогов. `-name` фильтрует по имени файла. Это базовый инструмент поиска на Linux.',
+    successOutput: ['/var/log/nginx.log'],
+    failureFeedback: '✗ Нужна команда поиска файла по имени в `/var/log`.',
+    wrongAnswerHints: {
+      'ls /var/log': '✗ `ls` покажет только один уровень. Для поиска по дереву лучше `find`.',
+      'grep nginx /var/log': '✗ `grep` ищет текст внутри файлов, а не файл по имени.',
+      locate: '✗ `locate` использует кэш и может быть недоступен. Используй `find`.',
+      'cd /var/log': '✗ Переход в директорию — не поиск файла.',
+    },
+  },
+  {
+    id: 'linux-p5',
+    title: 'Найти процесс nginx',
+    description: 'Посмотреть процессы и найти nginx',
+    type: 'terminal',
+    interaction: 'terminal',
+    skillTag: 'processes',
+    prompt: 'Найди процессы nginx среди запущенных.',
+    scenario:
+      'Nginx начал сильно нагружать сервер. Нужно посмотреть запущенные процессы и найти nginx.',
+    objective: 'Введи команду, которая покажет процессы и отфильтрует nginx.',
+    acceptedAnswers: [
+      'ps aux | grep nginx',
+      'ps -aux | grep nginx',
+      'ps aux | grep -i nginx',
+      'pgrep nginx',
+      'pgrep -a nginx',
+      'pidof nginx',
+    ],
+    correctAnswer: 'ps aux | grep nginx',
+    hints: [
+      'Сначала получи список процессов, затем отфильтруй по имени.',
+      'Классика: `ps` + pipe `|` + `grep`.',
+      'Можно `ps aux | grep nginx` или короче `pgrep nginx`.',
+    ],
+    explanation: 'ps показывает процессы; grep фильтрует вывод.',
+    successExplanation:
+      '`ps aux` показывает процессы. Через `|` вывод передаётся в `grep nginx`. Альтернативы: `pgrep`, `pidof`.',
+    successOutput: [
+      'root  1024  3.2  1.1  nginx: master process',
+      'www   1088 12.4  2.0  nginx: worker process',
+    ],
+    failureFeedback: '✗ Нужно найти процесс nginx среди запущенных.',
+    wrongAnswerHints: {
+      top: '✗ `top` интерактивен, но для быстрого поиска nginx удобнее `ps … | grep`.',
+      'kill nginx': '✗ Сначала найди процесс, не убивай наугад.',
+      'systemctl status': '✗ Близко, но задание про просмотр процессов / поиск nginx.',
+      nginx: '✗ Это не команда просмотра процессов.',
+    },
+  },
+];
