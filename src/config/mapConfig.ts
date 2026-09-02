@@ -14,15 +14,15 @@ export interface MapWaypoint {
 
 /** Winding sea route — coordinates in % of map viewport */
 export const MAP_WAYPOINTS: MapWaypoint[] = [
-  { id: 'linux', topicId: 'linux', label: 'Linux', labelRu: 'Linux', x: 12, y: 62, scale: 1.0, assetKey: 'linux' },
-  { id: 'networks', topicId: 'networks', label: 'Networks', labelRu: 'Сети', x: 24, y: 38, scale: 1.0, assetKey: 'networks' },
-  { id: 'ansible', topicId: 'ansible', label: 'Ansible', labelRu: 'Ansible', x: 38, y: 58, scale: 1.0, assetKey: 'ansible' },
-  { id: 'terraform', topicId: 'terraform', label: 'Terraform', labelRu: 'Terraform', x: 48, y: 32, scale: 1.0, assetKey: 'terraform' },
-  { id: 'docker', topicId: 'docker', label: 'Docker', labelRu: 'Docker', x: 58, y: 52, scale: 1.15, assetKey: 'docker' },
-  { id: 'kubernetes', topicId: 'kubernetes', label: 'Kubernetes', labelRu: 'Kubernetes', x: 70, y: 36, scale: 1.15, assetKey: 'kubernetes' },
-  { id: 'gitlab-cicd', topicId: 'gitlab-cicd', label: 'GitLab CI/CD', labelRu: 'GitLab CI/CD', x: 80, y: 54, scale: 1.15, assetKey: 'gitlab' },
-  { id: 'error-bay', label: 'Error Bay', labelRu: 'Бухта ошибок', x: 88, y: 42, scale: 1.2, assetKey: 'errorBay' },
-  { id: 'treasure', label: 'Offer Island', labelRu: 'Остров оффера', x: 94, y: 28, scale: 1.35, assetKey: 'treasure' },
+  { id: 'linux', topicId: 'linux', label: 'Linux', labelRu: 'Linux', x: 10, y: 68, scale: 1.05, assetKey: 'linux' },
+  { id: 'networks', topicId: 'networks', label: 'Networks', labelRu: 'Сети', x: 22, y: 42, scale: 1.0, assetKey: 'networks' },
+  { id: 'ansible', topicId: 'ansible', label: 'Ansible', labelRu: 'Ansible', x: 36, y: 62, scale: 1.0, assetKey: 'ansible' },
+  { id: 'terraform', topicId: 'terraform', label: 'Terraform', labelRu: 'Terraform', x: 46, y: 34, scale: 1.0, assetKey: 'terraform' },
+  { id: 'docker', topicId: 'docker', label: 'Docker', labelRu: 'Docker', x: 56, y: 54, scale: 1.2, assetKey: 'docker' },
+  { id: 'kubernetes', topicId: 'kubernetes', label: 'Kubernetes', labelRu: 'Kubernetes', x: 68, y: 38, scale: 1.2, assetKey: 'kubernetes' },
+  { id: 'gitlab-cicd', topicId: 'gitlab-cicd', label: 'GitLab CI/CD', labelRu: 'GitLab CI/CD', x: 78, y: 56, scale: 1.15, assetKey: 'gitlab' },
+  { id: 'error-bay', label: 'Error Bay', labelRu: 'Бухта ошибок', x: 86, y: 44, scale: 1.25, assetKey: 'errorBay' },
+  { id: 'treasure', label: 'Offer Island', labelRu: 'Остров оффера', x: 92, y: 26, scale: 1.4, assetKey: 'treasure' },
 ];
 
 export const TOPIC_WAYPOINT_COUNT = 7;

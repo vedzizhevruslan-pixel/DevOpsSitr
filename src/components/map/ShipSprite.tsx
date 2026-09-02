@@ -37,7 +37,7 @@ export function ShipSprite({ progress, animating }: ShipSpriteProps) {
         <AssetImage
           src={pirateAssets.ship}
           alt="Docker Ship"
-          className="w-16 h-16 md:w-20 md:h-20 object-contain drop-shadow-2xl"
+          className="w-20 h-20 md:w-28 md:h-28 object-contain drop-shadow-2xl"
           fallback={<span className="text-4xl">🚢</span>}
         />
       </motion.div>

@@ -18,6 +18,9 @@ export function ErrorBayView() {
   );
 
   const unresolved = mistakes.filter((m) => !m.resolved);
+  const resolved = mistakes.filter((m) => m.resolved);
+  const totalMistakes = mistakes.length;
+  const repairPercent = totalMistakes > 0 ? Math.round((resolved.length / totalMistakes) * 100) : 100;
   const byTopic = TOPICS.map((t) => ({
     topic: t,
     count: unresolved.filter((m) => m.topicId === t.id).length,
@@ -38,21 +41,43 @@ export function ErrorBayView() {
 
   return (
     <div className="h-full relative overflow-auto">
-      <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a12] via-[#1a1020] to-[#0d1f3c]" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(220,50,50,0.15),transparent_60%)]" />
+      <AssetImage
+        src={pirateAssets.islands.errorBay}
+        alt=""
+        className="absolute inset-0 w-full h-full object-cover opacity-30"
+        fallback={null}
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a12]/90 via-[#1a1020]/85 to-[#0d1f3c]/90" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(220,50,50,0.2),transparent_60%)]" />
+      <AssetImage
+        src={pirateAssets.decorations.wreck}
+        alt=""
+        className="absolute bottom-4 right-8 w-32 opacity-40 pointer-events-none"
+        fallback={null}
+      />
 
       <div className="relative z-10 p-8 max-w-3xl mx-auto">
         <div className="flex items-start gap-6 mb-8">
-          <AssetImage src={pirateAssets.islands.errorBay} alt="Mistake Bay" className="w-40 h-32 object-contain" fallback={<span className="text-6xl">💀</span>} />
+          <AssetImage src={pirateAssets.islands.errorBay} alt="Mistake Bay" className="w-48 h-36 object-contain drop-shadow-2xl" fallback={<span className="text-6xl">💀</span>} />
           <div>
             <h2 className="text-2xl font-display font-bold text-red-200">Бухта ошибок</h2>
             <p className="text-red-200/60 text-sm mt-1">Ремонтная бухта · финальный обзор пробоин</p>
           </div>
         </div>
 
-        <div className="bg-black/40 border border-red-900/40 rounded-xl p-6 mb-6">
-          <div className="text-red-300 font-semibold mb-4">
-            Осталось пробоин: {getUnresolvedMistakeCount()}
+        <div className="bg-black/50 border border-red-900/40 rounded-xl p-6 mb-6 backdrop-blur-sm">
+          <div className="text-red-300 font-semibold mb-2">ПРОБОИНЫ КОРАБЛЯ</div>
+          <div className="text-red-200 text-lg font-bold mb-4">
+            Осталось: {getUnresolvedMistakeCount()}
+          </div>
+          <div className="mb-4">
+            <div className="flex justify-between text-xs text-cyan-300/70 mb-1">
+              <span>Исправлено</span>
+              <span>{resolved.length} / {totalMistakes}</span>
+            </div>
+            <div className="h-2 bg-red-950 rounded-full overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-emerald-600 to-cyan-500 transition-all duration-500" style={{ width: `${repairPercent}%` }} />
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             {byTopic.map(({ topic, count }) => (

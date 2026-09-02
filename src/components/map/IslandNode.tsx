@@ -35,7 +35,7 @@ export function IslandNode({
   isCurrent,
 }: IslandNodeProps) {
   const assetSrc = pirateAssets.islands[waypoint.assetKey];
-  const size = 72 * waypoint.scale;
+  const size = 110 * waypoint.scale;
   const locked = status === 'locked';
 
   return (

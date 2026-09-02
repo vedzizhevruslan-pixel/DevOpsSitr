@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MAP_WAYPOINTS } from '../../config/mapConfig';
-import { pirateAssets } from '../../config/assetManifest';
+import { pirateAssets, getAllAssetUrls } from '../../config/assetManifest';
 import { TOPIC_ORDER } from '../../data/topics';
 import { isTopicUnlocked } from '../../engines/masteryEngine';
 import { getStormVisualLevel, getStormMessage } from '../../engines/stormEngine';
@@ -12,6 +12,7 @@ import { RouteLayer } from './RouteLayer';
 import { IslandNode, getIslandStatusForTopic } from './IslandNode';
 import { ShipSprite } from './ShipSprite';
 import { CurrentMissionPanel } from './CurrentMissionPanel';
+import { MapDecorations } from './MapDecorations';
 import type { TopicId } from '../../types';
 
 function StormEffects({ level }: { level: ReturnType<typeof getStormVisualLevel> }) {
@@ -64,12 +65,8 @@ export function VoyageMap() {
   const [mapReady, setMapReady] = useState(false);
 
   useEffect(() => {
-    preloadAssets([
-      pirateAssets.ocean,
-      pirateAssets.ship,
-      ...Object.values(pirateAssets.islands),
-    ]);
-    const t = setTimeout(() => setMapReady(true), 400);
+    preloadAssets(getAllAssetUrls());
+    const t = setTimeout(() => setMapReady(true), 600);
     return () => clearTimeout(t);
   }, []);
 
@@ -139,12 +136,15 @@ export function VoyageMap() {
         <AssetImage
           src={pirateAssets.ocean}
           alt="Ocean"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover wave-bg"
           fallback={null}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0a1628]/30 via-transparent to-[#0a1628]/50" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(0,0,0,0.45)_100%)]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0a1628]/20 via-transparent to-[#0a1628]/40" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_50%,rgba(0,0,0,0.35)_100%)]" />
+        <div className="absolute inset-0 opacity-20 pointer-events-none bg-[linear-gradient(120deg,transparent_40%,rgba(255,255,255,0.08)_50%,transparent_60%)] animate-[shimmer_12s_ease-in-out_infinite]" />
       </div>
+
+      <MapDecorations />
 
       <RouteLayer shipProgress={shipProgress} />
       {stormRetreatLine}

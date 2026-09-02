@@ -74,6 +74,11 @@ body {
   animation: lightning 4s infinite;
 }
 
+@keyframes shimmer {
+  0%, 100% { transform: translateX(-30%); }
+  50% { transform: translateX(30%); }
+}
+
 .treasure-glow {
   animation: glow-pulse 2s ease-in-out infinite;
 }

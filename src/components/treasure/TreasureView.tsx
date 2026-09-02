@@ -121,6 +121,7 @@ export function TreasureView() {
 
         {!treasureUnlocked ? (
           <>
+            <p className="text-amber-300/90 mb-4 font-display text-lg">ГЛАВНЫЙ КЛАД ПОКА ЗАКРЫТ</p>
             <p className="text-cyan-300/80 mb-6 text-sm">
               Настоящий DevOps-пират завершает путешествие оффером, а не картинкой с золотом.
             </p>
@@ -144,8 +145,23 @@ export function TreasureView() {
           </>
         ) : (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+              {Array.from({ length: 30 }).map((_, i) => (
+                <motion.div
+                  key={i}
+                  className="absolute w-2 h-2 rounded-full"
+                  style={{
+                    left: `${Math.random() * 100}%`,
+                    backgroundColor: ['#ffd700', '#ff6b6b', '#4ecdc4', '#ffe66d'][i % 4],
+                  }}
+                  initial={{ top: '-5%', opacity: 1 }}
+                  animate={{ top: '105%', opacity: 0, rotate: 360 }}
+                  transition={{ duration: 2 + Math.random() * 2, delay: Math.random() * 0.5 }}
+                />
+              ))}
+            </div>
             <h3 className="text-xl font-display font-bold text-amber-200 mb-2">LEGENDARY DEVOPS CAPTAIN</h3>
-            <p className="text-amber-100/80 mb-6">Путешествие завершено!</p>
+            <p className="text-amber-100/80 mb-2">ПУТЕШЕСТВИЕ ЗАВЕРШЕНО</p>
             {pdfMeta && (
               <div className="flex gap-3 justify-center">
                 <button type="button" onClick={async () => { const o = await getPdfOffer(); if (o) openPdfBlob(o.blob); }} className="px-4 py-2 bg-cyan-700 rounded text-white text-sm">
