@@ -1,0 +1,17 @@
+{
+  "name": "DevOps Pirate Voyage",
+  "install": "npm ci",
+  "terminals": [
+    {
+      "name": "dev",
+      "command": "npm run dev -- --host",
+      "description": "Vite dev server for the DevOps Pirate Voyage app (http://localhost:5173)."
+    }
+  ],
+  "ports": [
+    {
+      "name": "vite",
+      "port": 5173
+    }
+  ]
+}
